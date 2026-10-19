@@ -1,31 +1,23 @@
-# axSquiggle
+<p align="center"><img src="docs/img/banner.svg" alt="axSquiggle: sketch it, it cleans itself up" width="100%"></p>
 
-Fast wireframe and storyboard tool for writing specs. Sketch with mouse, touch or pen, or type an outline;
-rough input becomes clean, labelled wireframe parts that size and align themselves.
-Static, offline, no backend, no accounts.
-
-**Sketch or type it.** Rough input becomes clean, labelled parts that size and align themselves. The outline on the right is the same drawing as text.
-
-![A dashboard drawn as a wireframe in axSquiggle, with its outline on the right](docs/img/wireframe.png)
-
-**Preview it for real.** Shift+V rebuilds every screen as working controls inside a browser or phone, with your links clickable.
-
-![The same dashboard as a realistic preview](docs/img/preview-clean.png)
-
-**Pick a look.** Clean, Material, Dark, Bold brand or Minimal, on desktop or phone frames.
-
-<p>
-  <img src="docs/img/preview-dark.png" alt="The dashboard preview in the Dark style" width="62%">
-  <img src="docs/img/preview-phone.png" alt="A phone task list preview" width="36%">
+<p align="center">
+  <b>Fast wireframe and storyboard tool for writing specs.</b><br>
+  Sketch with mouse, touch or pen, or type an outline;<br>
+  rough input becomes clean, labelled wireframe parts that size and align themselves.
 </p>
 
-**Work with your AI.** An AI client drafts the board over MCP, you review it in the app, and it acts on your notes.
+<p align="center">
+  <img alt="single file, works offline" src="https://img.shields.io/badge/single%20file-works%20offline-e8590c?style=for-the-badge">
+  <img alt="no backend, no accounts" src="https://img.shields.io/badge/no%20backend-no%20accounts-2b2118?style=for-the-badge">
+  <img alt="MCP ready" src="https://img.shields.io/badge/AI-MCP%20ready-8250df?style=for-the-badge">
+  <img alt="Node 18 or newer for the AI bridge" src="https://img.shields.io/badge/bridge-Node%2018%2B-2da44e?style=for-the-badge">
+</p>
 
-![An AI drafts a sign-up screen from a prompt, the user loops the Password field and leaves a note, and the AI updates the board and replies](docs/img/ai-review-loop.png)
+<p align="center"><img src="docs/img/wireframe.png" alt="A dashboard drawn as a wireframe in axSquiggle, with its outline on the right" width="100%"></p>
 
-*The prompt is an example. The draft, the note and the update are real bridge calls (`draft_board`, `get_review`, `edit_frame`, `resolve_notes`), shown as the app displayed them.*
+<p align="center"><sub>✏️ <b>Sketch or type it.</b> The outline on the right is the same drawing as text.</sub></p>
 
-## Run it (pick one)
+## 🚀 Run it (pick one)
 
 1. **Just the app.** Download `axsquiggle.html` and double-click it. One file, works offline, nothing to install. Also hostable anywhere as a
    static file (a hosted copy is published to GitHub Pages by `.github/workflows/pages.yml`).
@@ -33,9 +25,10 @@ Static, offline, no backend, no accounts.
    prints an address such as `http://127.0.0.1:4747/`: open it and the app is already connected. Add `--open` to open it for you.
 3. **From source.** `npm install`, then `npm run dev` (app only), `npm start` (bridge + app), `npm test`, `npm run dist` (builds the two files in `dist/`).
 
-New here? **`how-to.html`** is an animated guide (sketching, tap-and-type stamps, shortcut mode, parts, working with your AI); the app's **How to** button opens the same page, and it ships as its own file next to `axsquiggle.html`.
+> [!TIP]
+> New here? **`how-to.html`** is an animated guide (sketching, tap-and-type stamps, shortcut mode, parts, working with your AI); the app's **How to** button opens the same page, and it ships as its own file next to `axsquiggle.html`.
 
-## Use it from an AI client (MCP)
+## 🤖 Use it from an AI client (MCP)
 
 The same `axsquiggle.mjs` is the MCP server: an AI client launches it and it speaks MCP on stdin/stdout by itself.
 
@@ -47,9 +40,32 @@ Claude Code: `claude mcp add axsquiggle -- node /path/to/axsquiggle.mjs`. If a b
 app you have open and the AI share one board. Clients that connect to a URL instead can use `http://127.0.0.1:4747/mcp` with
 `Authorization: Bearer <token>` (the token is in `~/.axsquiggle/token`).
 
-## Locked-down and corporate machines
+### See it in action
 
-Nothing here tries to defeat a security policy; it gives you the option that fits yours.
+An AI client drafts the board, you review it in the app, and it acts on your notes:
+
+<p align="center"><img src="docs/img/ai-review-loop.png" alt="An AI drafts a sign-up screen from a prompt, the user loops the Password field and leaves a note, and the AI updates the board and replies" width="100%"></p>
+
+<sub>The prompt is an example. The draft, the note and the update are real bridge calls (`draft_board`, `get_review`, `edit_frame`, `resolve_notes`), shown as the app displayed them.</sub>
+
+## 👀 Preview
+
+Shift+V (or Export → Preview) opens a realistic preview of every screen: buttons, inputs, cards and lists rebuilt as real controls inside a phone or browser, with your links working. Pick the look with the style menu or press S to cycle (Clean, Material, Dark, Bold brand, Minimal). The same page is served by the bridge at `/api/export/preview?style=dark`, and Export → Preview saves it as one offline file.
+
+<p align="center"><img src="docs/img/preview-clean.png" alt="The dashboard as a realistic preview in a browser frame" width="100%"></p>
+
+**Pick a look:** Clean, Material, Dark, Bold brand or Minimal, on desktop or phone frames.
+
+<p align="center">
+  <img src="docs/img/preview-dark.png" alt="The dashboard preview in the Dark style" width="62%">
+  <img src="docs/img/preview-phone.png" alt="A phone task list preview" width="36%">
+</p>
+
+
+## 🏢 Locked-down and corporate machines
+
+> [!NOTE]
+> Nothing here tries to defeat a security policy; it gives you the option that fits yours.
 
 | What is blocked | What to do |
 |---|---|
@@ -62,7 +78,7 @@ Nothing here tries to defeat a security policy; it gives you the option that fit
 | Nothing may run on laptops | Run one bridge on an internal server: `AXSQ_HOST=0.0.0.0 AXSQ_HOSTS=wire.corp.example AXSQ_PUBLIC_URL=https://wire.corp.example node axsquiggle.mjs bridge` behind your HTTPS reverse proxy. Everyone opens that address and types the token once; AI clients use `https://wire.corp.example/mcp` with a bearer token. In this mode the token is never written into the page. |
 | The AI is a hosted agent that cannot see your machine | Same: point it at the server's `/mcp` URL. |
 
-## Layout
+## 🗂️ Layout
 
 - `src/core/` pure modules, no DOM: `recognize` (stroke recognition), `semantics` (roles + smart sizing),
   `layout` (outline builder and row edits), `exporters` (SVG, Figma SVG, Excalidraw, Markdown, HTML),
@@ -70,11 +86,14 @@ Nothing here tries to defeat a security policy; it gives you the option that fit
   `agent` (read/edit/diff/review functions an outside AI uses), `connect` (arrow attach + routing), `links`, `parts`, `search`.
 - `src/ui/` canvas, panels, dialogs. `server/` the AI bridge (HTTP + MCP). `tests/` Vitest suites.
 
-## Saving and opening
+## 💾 Saving and opening
 
 The board autosaves in the browser. **New** starts an empty drawing (Undo brings the old one back). To keep it as a file (or move it, or version it in git), press **Ctrl/Cmd+S** or **Save**: one small JSON file, `{"axsquiggle":1,"frames":[...]}`. **Ctrl/Cmd+O**, **Open**, or dropping the file on the canvas brings it back (Undo reverts). In Chrome and Edge Save writes back to the same file; elsewhere it downloads. It is exactly what an AI gets from `get_board` (format `json`), and an AI can hand a whole board back with `load_board`.
 
-## Keyboard
+## ⌨️ Keyboard
+
+> [!TIP]
+> Forgot a key? Press **Space** and every shortcut is listed and searchable.
 
 `Space` (or `Ctrl/Cmd+K`) lists every shortcut, `/` stamp and saved part in one compact panel: press a key and it runs, or press Tab or `/` to search (Enter runs the highlighted row). `F` Flow tool (draw, type, select and move with no tool switching),
 `?` (the button at the end of the top row) opens the animated help, `Ctrl+F` search all frames, `/` the stamps and parts list, `Esc` undo (the first one after a drawn shape gives you the sketch back; with something selected it deselects first), `Shift+Esc` redo, `Ctrl+Z`/`Ctrl+Shift+Z` too, `Backspace`/`Del` delete, `Ctrl+A`/Shift+click/drag a box to multi-select, `B` save the selection as a reusable part
@@ -90,7 +109,7 @@ Basic controls: `/dropdown Country "Pick one"`, `/search`, `/tabs Day, Week, Mon
 
 Tap the canvas and type `/radio Contact by: Email, SMS` (text before the colon titles the group, above its border), `/cb Remember me`, `/btn Save, Cancel`, `/field`, `/img`, `/card` to stamp elements.
 
-## AI bridge (draft, review, action)
+## 🔁 AI bridge (draft, review, action)
 
 Let an outside AI draft the first screens, edit them yourself, leave review notes, and send it back to be actioned.
 
@@ -115,10 +134,7 @@ Tools: `get_board`, `draft_board`, `edit_frame`, `edit_element`, `delete_frame`,
 
 **Several boards.** The bridge keeps named boards in `~/.axsquiggle/boards/<name>.json` (an earlier single `board.json` becomes `default`; deleted boards move to `.trash/`). One is open in the browser; every tool acts on it unless given `board_name`. An AI should `list_boards` first and `new_board` for unrelated work instead of adding to the open one. In the app, **Shift+B** (or the board name in the toolbar) switches or starts a board; opening a board starts with an empty Undo history. REST equivalents: `GET /api/boards`, `POST /api/tools/<name>`, `GET/PUT /api/board`, `GET /api/review`, `GET /api/events` (SSE).
 
-Security: the bridge binds to 127.0.0.1, every request needs the token (`~/.axsquiggle/token`, or `AXSQ_TOKEN`), and browsers are limited to
-localhost origins (add others with `AXSQ_ORIGINS`). Settings: `AXSQ_PORT`, `AXSQ_DIR`, `AXSQ_APP`. Writes carry a revision, so a stale
-edit is refused instead of overwriting.
-
-## Preview
-
-Shift+V (or Export → Preview) opens a realistic preview of every screen: buttons, inputs, cards and lists rebuilt as real controls inside a phone or browser, with your links working. Pick the look with the style menu or press S to cycle (Clean, Material, Dark, Bold brand, Minimal). The same page is served by the bridge at `/api/export/preview?style=dark`, and Export → Preview saves it as one offline file.
+> [!IMPORTANT]
+> Security: the bridge binds to 127.0.0.1, every request needs the token (`~/.axsquiggle/token`, or `AXSQ_TOKEN`), and browsers are limited to
+> localhost origins (add others with `AXSQ_ORIGINS`). Settings: `AXSQ_PORT`, `AXSQ_DIR`, `AXSQ_APP`. Writes carry a revision, so a stale
+> edit is refused instead of overwriting.

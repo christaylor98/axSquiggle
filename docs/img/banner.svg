@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 280" width="1200" height="280" role="img" aria-label="axSquiggle: sketch it, it cleans itself up">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff4e8"/>
+      <stop offset="1" stop-color="#ffd9bd"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="280" rx="28" fill="url(#bg)"/>
+  <!-- wordmark -->
+  <text x="70" y="140" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="104" font-weight="800" fill="#2b2118">ax<tspan fill="#e8590c">Squiggle</tspan></text>
+  <!-- hand-drawn underline -->
+  <path d="M72 182 C150 160 210 204 290 180 S430 162 510 184 S650 202 700 172" fill="none" stroke="#e8590c" stroke-width="9" stroke-linecap="round"/>
+  <text x="72" y="240" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-size="34" fill="#5b4636">Sketch it. It cleans itself up. Hand it to your AI.</text>
+  <!-- rough sketch becoming a clean box, right side -->
+  <g transform="translate(790 52)">
+    <path d="M6 30 C40 22 120 34 150 26 C158 62 152 120 148 150 C110 158 50 146 8 156 C14 110 2 70 6 30Z" fill="none" stroke="#e8590c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 14" opacity=".55"/>
+    <path d="M200 60 L226 76 L200 92" fill="none" stroke="#e8590c" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M168 76 L216 76" fill="none" stroke="#e8590c" stroke-width="8" stroke-linecap="round"/>
+    <rect x="250" y="26" width="140" height="130" rx="14" fill="#fff" stroke="#2b2118" stroke-width="6"/>
+    <rect x="268" y="46" width="104" height="14" rx="7" fill="#2b2118"/>
+    <rect x="268" y="76" width="104" height="12" rx="6" fill="#d8cfc4"/>
+    <rect x="268" y="98" width="70" height="12" rx="6" fill="#d8cfc4"/>
+    <rect x="268" y="124" width="64" height="20" rx="10" fill="#e8590c"/>
+  </g>
+</svg>
