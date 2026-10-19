@@ -20,7 +20,8 @@ jobs:
         run: |
           mkdir /tmp/plain && cp dist/axsquiggle.mjs dist/axsquiggle.html /tmp/plain/
           cd /tmp/plain && AXSQ_DIR=/tmp/plain/data AXSQ_PORT=4799 node axsquiggle.mjs bridge & sleep 3
-          curl -sf http://127.0.0.1:4799/ | grep -q "axSquiggle"
+          curl -sf http://127.0.0.1:4799/ -o page.html   # not piped into grep -q: it exits early and curl then fails (23) under pipefail
+          grep -q "axSquiggle" page.html
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'ubuntu-latest'
         with: { name: axsquiggle, path: "dist/axsquiggle.html\ndist/axsquiggle.mjs" }
