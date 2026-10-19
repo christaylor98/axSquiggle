@@ -4,6 +4,21 @@ Fast wireframe and storyboard tool for writing specs. Sketch with mouse, touch o
 rough input becomes clean, labelled wireframe parts that size and align themselves.
 Static, offline, no backend, no accounts.
 
+**Sketch or type it.** Rough input becomes clean, labelled parts that size and align themselves. The outline on the right is the same drawing as text.
+
+![A dashboard drawn as a wireframe in axSquiggle, with its outline on the right](docs/img/wireframe.png)
+
+**Preview it for real.** Shift+V rebuilds every screen as working controls inside a browser or phone, with your links clickable.
+
+![The same dashboard as a realistic preview](docs/img/preview-clean.png)
+
+**Pick a look.** Clean, Material, Dark, Bold brand or Minimal, on desktop or phone frames.
+
+<p>
+  <img src="docs/img/preview-dark.png" alt="The dashboard preview in the Dark style" width="62%">
+  <img src="docs/img/preview-phone.png" alt="A phone task list preview" width="36%">
+</p>
+
 ## Run it (pick one)
 
 1. **Just the app.** Download `axsquiggle.html` and double-click it. One file, works offline, nothing to install. Also hostable anywhere as a
