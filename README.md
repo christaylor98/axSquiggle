@@ -90,10 +90,23 @@ Shift+V (or Export → Preview) opens a realistic preview of every screen: butto
 
 The board autosaves in the browser. **New** starts an empty drawing (Undo brings the old one back). To keep it as a file (or move it, or version it in git), press **Ctrl/Cmd+S** or **Save**: one small JSON file, `{"axsquiggle":1,"frames":[...]}`. **Ctrl/Cmd+O**, **Open**, or dropping the file on the canvas brings it back (Undo reverts). In Chrome and Edge Save writes back to the same file; elsewhere it downloads. It is exactly what an AI gets from `get_board` (format `json`), and an AI can hand a whole board back with `load_board`.
 
+> [!TIP]
+> **A board is just small text.** The saved JSON is about 4 KB per screen (a 7-screen board is roughly 25 KB, a 16-screen one about 60 KB), and it only grows if you paste pictures in. So you can append it to a spec as a fenced `json` block, or keep the file under config management like any other source file: it is pretty-printed, so it diffs and merges cleanly in git, and an AI can hand it back with `load_board`.
+
 ## ⌨️ Keyboard
 
-> [!TIP]
-> Forgot a key? Press **Space** and every shortcut is listed and searchable.
+- **`Space`** (or `Ctrl/Cmd+K`) lists every shortcut in one panel. Press a key and it runs, or press `Tab` / `/` to search.
+- **`F`** is the Flow tool: draw, type, select and move with no tool switching.
+- **`/`** on the canvas stamps elements and your saved parts: `/radio`, `/cb`, `/btn`, `/field`, `/card`.
+- **`Esc`** undo, `Shift+Esc` redo, `Ctrl+F` search all frames, `1`-`9` jump to a frame, `?` the animated help.
+- **`B`** saves the selection as a reusable part, **`L`** links it to another frame, **`I`** plays the board click-through.
+
+<p align="center"><img src="docs/img/shortcuts.png" alt="Pressing Space opens a panel listing every shortcut and stamp, grouped by tools, edit, view, frames, file and board" width="100%"></p>
+
+<p align="center"><sub>Press <b>Space</b> and every key is one glance away.</sub></p>
+
+<details>
+<summary><b>All the details</b> (typing radios and checkboxes, sub-labels, heights, basic controls)</summary>
 
 `Space` (or `Ctrl/Cmd+K`) lists every shortcut, `/` stamp and saved part in one compact panel: press a key and it runs, or press Tab or `/` to search (Enter runs the highlighted row). `F` Flow tool (draw, type, select and move with no tool switching),
 `?` (the button at the end of the top row) opens the animated help, `Ctrl+F` search all frames, `/` the stamps and parts list, `Esc` undo (the first one after a drawn shape gives you the sketch back; with something selected it deselects first), `Shift+Esc` redo, `Ctrl+Z`/`Ctrl+Shift+Z` too, `Backspace`/`Del` delete, `Ctrl+A`/Shift+click/drag a box to multi-select, `B` save the selection as a reusable part
@@ -108,6 +121,8 @@ An image or card takes a height: `image Cockpit view {h=320}` (default 160). An 
 Basic controls: `/dropdown Country "Pick one"`, `/search`, `/tabs Day, Week, Month` (a button group), `/badge New`.
 
 Tap the canvas and type `/radio Contact by: Email, SMS` (text before the colon titles the group, above its border), `/cb Remember me`, `/btn Save, Cancel`, `/field`, `/img`, `/card` to stamp elements.
+
+</details>
 
 ## 🔁 AI bridge (draft, review, action)
 
