@@ -153,3 +153,7 @@ Tools: `get_board`, `draft_board`, `edit_frame`, `edit_element`, `delete_frame`,
 > Security: the bridge binds to 127.0.0.1, every request needs the token (`~/.axsquiggle/token`, or `AXSQ_TOKEN`), and browsers are limited to
 > localhost origins (add others with `AXSQ_ORIGINS`). Settings: `AXSQ_PORT`, `AXSQ_DIR`, `AXSQ_APP`. Writes carry a revision, so a stale
 > edit is refused instead of overwriting.
+
+## 📄 License
+
+[MIT](LICENSE)
