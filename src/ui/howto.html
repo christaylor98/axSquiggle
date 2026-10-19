@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to use axSquiggle</title>
+<style>
+  :root { --bg:#f6f5f2; --panel:#fff; --ink:#1f2328; --mute:#6b7280; --line:#d9d6cf; --accent:#e8590c; --chip:#fdece1; --paper:#fff; --dot:rgba(0,0,0,.14); --ok:#2f9e44; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16181c; --panel:#1f2227; --ink:#ececec; --mute:#9aa1ab; --line:#33373d; --accent:#ff8a3d; --chip:#3a2a20; --paper:#1c1f24; --dot:rgba(255,255,255,.14); } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .hand { font-family: Kalam, "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive, system-ui; }
+  main { max-width: 860px; margin: 0 auto; padding: 28px 18px 80px; }
+  h1 { font-size: 34px; margin: 0 0 6px; } h1 b { color: var(--accent); font-family: Kalam, "Segoe Print", "Comic Sans MS", cursive; }
+  .lede { color: var(--mute); font-size: 18px; margin: 0 0 26px; }
+  nav.toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 34px; }
+  nav.toc a { color: var(--ink); text-decoration: none; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: 14px; }
+  nav.toc a:hover { border-color: var(--accent); }
+  section { margin: 0 0 54px; }
+  h2 { font-size: 24px; margin: 0 0 4px; } h2 span { color: var(--accent); margin-right: 6px; }
+  p.sub { margin: 0 0 14px; color: var(--mute); }
+  .stage { position: relative; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; aspect-ratio: 16 / 9; width: 100%;
+    background-image: radial-gradient(var(--dot) 1.2px, transparent 1.4px); background-size: 20px 20px; user-select: none; }
+  .cap { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; color: var(--mute); font-size: 14px; min-height: 24px; }
+  .cap button { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px; padding: 2px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+  .cap button:hover { border-color: var(--accent); }
+  kbd { font: 700 12px ui-monospace, Menlo, Consolas, monospace; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 6px; background: var(--panel); color: var(--ink); }
+  svg { display: block; width: 100%; height: 100%; }
+  .ink { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .rough { fill: none; stroke: var(--accent); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; opacity: .9; }
+  .grey { stroke: var(--mute); }
+  .fade { transition: opacity .45s ease; } .off { opacity: 0; }
+  .t { font-family: Kalam, "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive, system-ui; fill: var(--ink); }
+  .tag { font: 700 9px ui-monospace, monospace; fill: var(--accent); }
+  /* DOM-based stages */
+  .abs { position: absolute; }
+  .pill { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; font-size: 13px; }
+  .inl { position: absolute; border: 1px dashed var(--accent); border-radius: 3px; background: var(--panel); padding: 0 6px; font-family: Kalam, "Segoe Print", cursive; font-size: 15px; min-width: 90px; height: 26px; line-height: 24px; white-space: pre; }
+  .caret::after { content: "▏"; color: var(--accent); animation: blink 1s steps(1) infinite; } @keyframes blink { 50% { opacity: 0; } }
+  .pop { position: absolute; background: var(--panel); border: 1px solid var(--accent); border-radius: 8px; padding: 3px; font-size: 12px; box-shadow: 0 6px 18px rgba(0,0,0,.18); min-width: 250px; }
+  .pop div { display: flex; gap: 8px; padding: 2px 8px; border-radius: 5px; } .pop b { color: var(--accent); font-family: ui-monospace, monospace; min-width: 70px; } .pop span { color: var(--mute); }
+  .pop div.on { background: var(--chip); outline: 1px solid var(--accent); outline-offset: -1px; }
+  .cursor { position: absolute; width: 18px; height: 18px; z-index: 9; transition: left .7s ease, top .7s ease; pointer-events: none; }
+  .cursor svg { width: 18px; height: 18px; } .ripple { position: absolute; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--accent); z-index: 8; transform: translate(-50%,-50%) scale(.2); opacity: 0; }
+  .ripple.go { animation: rip .55s ease-out; } @keyframes rip { 0% { opacity: 1; transform: translate(-50%,-50%) scale(.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.6); } }
+  .toast { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); background: var(--ink); color: var(--bg); border-radius: 999px; padding: 4px 14px; font-size: 13px; }
+  .keycap { position: absolute; right: 14px; bottom: 14px; z-index: 7; transition: transform .12s; } .keycap.press { transform: translateY(3px); }
+  .box { position: absolute; border: 2px solid var(--ink); border-radius: 4px; background: var(--paper); display: flex; align-items: center; justify-content: center; font-family: Kalam, "Segoe Print", cursive; font-size: 15px; }
+  .box.sm { border-width: 1.6px; font-size: 13px; }
+  .pin { position: absolute; background: var(--accent); color: #fff; border-radius: 50%; width: 18px; height: 18px; font: 700 11px system-ui; display: flex; align-items: center; justify-content: center; }
+  .chat { position: absolute; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 5px 10px; font-size: 12.5px; max-width: 46%; }
+  .chat.ai { border-color: var(--accent); } .chat code, code { font: 12px ui-monospace, Menlo, Consolas, monospace; background: var(--chip); border-radius: 4px; padding: 0 4px; }
+  .in { animation: pop .35s ease both; } @keyframes pop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+  .cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .card h3 { margin: 0 0 6px; font-size: 17px; } .card p { margin: 4px 0; color: var(--mute); font-size: 14px; } pre { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; overflow: auto; font: 12.5px ui-monospace, Menlo, Consolas, monospace; margin: 6px 0; }
+  @media (prefers-reduced-motion: reduce) { .caret::after { animation: none; } .in { animation: none; } }
+  footer { color: var(--mute); font-size: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1><b>axSquiggle</b>: how to use it</h1>
+  <p class="lede">Sketch a screen the way you would on paper. It cleans itself up, sizes itself, and keeps an outline you can type into. Everything below is a looping demo: use <b>Replay</b> to watch one again.</p>
+  <nav class="toc"><a href="#draw">1 Sketch</a><a href="#type">2 Tap and type</a><a href="#keys">3 Keys</a><a href="#parts">4 Parts</a><a href="#ai">5 Work with your AI</a><a href="#run">6 Run it</a></nav>
+
+  <section id="draw">
+    <h2><span>1</span>Sketch it, it cleans itself up</h2>
+    <p class="sub">Draw with the mouse, a pen or your finger. When you let go, the stroke becomes a real wireframe shape.</p>
+    <div class="stage" id="s1" aria-label="Animation: a rough box becomes a button, a scribble becomes text lines, a hooked line becomes an arrow"></div>
+    <div class="cap"><span id="c1">A box becomes a button. A scribble becomes text lines. A line with a hook becomes an arrow. A circle is a radio button or an avatar.</span><button data-r="s1">Replay</button></div>
+  </section>
+
+  <section id="type">
+    <h2><span>2</span>Tap and type: radios, checkboxes, buttons in seconds</h2>
+    <p class="sub">Tap an empty spot and type <kbd>/</kbd> to see every stamp. Type a label and press <kbd>Enter</kbd>: the next one appears underneath. Enter on an empty one ends the list.</p>
+    <div class="stage" id="s2" aria-label="Animation: typing /radio then labels, each Enter adds the next radio button, and a border appears around the group"></div>
+    <div class="cap"><span id="c2">Two or more radios or checkboxes get a border that always hugs them. A label can have several lines; indent a later line to make a smaller sub-label.</span><button data-r="s2">Replay</button></div>
+  </section>
+
+  <section id="keys">
+    <h2><span>3</span>You never have to remember a key</h2>
+    <p class="sub">Press <kbd>Space</kbd> (or <kbd>Ctrl</kbd>+<kbd>K</kbd>) and every shortcut, <code>/</code> stamp and saved part is listed. Press the key you want and it runs; press <kbd>Tab</kbd> or <kbd>/</kbd> to search instead. Every toolbar button also shows its key, and a bar above the canvas lists the keys that work right now.</p>
+    <div class="stage" id="s3" aria-label="Animation: pressing Space shows all shortcuts, pressing V selects the Select tool"></div>
+    <div class="cap"><span id="c3">Handy: <kbd>F</kbd> Flow (draw, type, select and move without switching), <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>X</kbd>/<kbd>V</kbd>/<kbd>D</kbd> copy, cut, paste, duplicate, <kbd>/</kbd> search every frame.</span><button data-r="s3">Replay</button></div>
+  </section>
+
+  <section id="parts">
+    <h2><span>4</span>Parts: save once, stamp anywhere</h2>
+    <p class="sub">A <b>part</b> is a group of elements saved under a name: a nav bar, a form row, a set of options. Select them, press <kbd>B</kbd>, name it. Then tap the canvas and type <kbd>/your-name</kbd>. The Parts tab lists them, and has three ready-made examples to try (<code>/nav-bar</code>, <code>/form-row</code>, <code>/choice-group</code>).</p>
+    <div class="stage" id="s4" aria-label="Animation: selecting a nav bar, pressing B, naming it nav-bar, then typing /nav-bar elsewhere stamps a copy"></div>
+    <div class="cap"><span id="c4">Parts are saved with the board, so they travel with it. Label text, container contents and wired arrows all come along.</span><button data-r="s4">Replay</button></div>
+  </section>
+
+  <section id="ai">
+    <h2><span>5</span>Work with your AI</h2>
+    <p class="sub">Your AI (Claude Code, Claude Desktop, anything that speaks MCP) drafts the first screens. You edit them and write review notes: just select an element, or tap it in Review mode, and type. Then tell the AI to look.</p>
+    <div class="stage" id="s5" aria-label="Animation: the AI drafts a login screen, you add a note, the AI fetches the review, fixes it and ticks the note"></div>
+    <div class="cap"><span id="c5">The AI only ever sees your notes when it asks (<code>get_review</code>). Its edits arrive as one undoable change, and each note shows its reply.</span><button data-r="s5">Replay</button></div>
+  </section>
+
+  <section id="run">
+    <h2><span>6</span>Run it anywhere</h2>
+    <p class="sub">No account, no server needed for the app itself.</p>
+    <div class="cards">
+      <div class="card"><h3>Just the app</h3><p>Download <code>axsquiggle.html</code> and double-click it. One file, works offline.</p></div>
+      <div class="card"><h3>App + AI</h3><p>Run the single file (Node 18+, no install):</p><pre>node axsquiggle.mjs</pre><p>Open the address it prints; the app is already connected.</p></div>
+      <div class="card"><h3>In your AI client</h3><p>Add it as an MCP server:</p><pre>claude mcp add axsquiggle -- node /path/to/axsquiggle.mjs</pre></div>
+    </div>
+  </section>
+  <footer>Press <kbd>Space</kbd> in the app any time to see every shortcut.</footer>
+</main>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const $ = (el, sel) => el.querySelector(sel);
+  const E = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+  const arrow = '<svg viewBox="0 0 18 18"><path d="M2 1l13 7-6 1.5L7 16z" fill="var(--ink)" stroke="var(--paper)" stroke-width="1"/></svg>';
+  const stages = {};
+
+  /** A looping, cancellable demo: render the first frame, animate, pause, repeat while it is on screen. Replay restarts it. */
+  function register(id, render, run) {
+    const el = document.getElementById(id);
+    let token = 0, visible = false, looping = false;
+    const w = (my) => async (ms) => { await sleep(ms); if (my !== token) throw 0; };
+    async function loop() {
+      if (looping) return;
+      looping = true;
+      while (visible) {
+        const my = ++token;
+        render(el, false);
+        try { await run(el, w(my)); await w(my)(2600); } catch (e) { /* cancelled by Replay or by scrolling away */ }
+      }
+      looping = false;
+    }
+    stages[id] = { replay() { token++; visible = true; loop(); } };
+    if (reduce) { render(el, true); return; }          // reduced motion: show the finished picture, no looping
+    new IntersectionObserver((es) => { for (const x of es) { visible = x.isIntersecting; if (visible) loop(); else token++; } }, { threshold: 0.35 }).observe(el);
+  }
+  document.querySelectorAll('[data-r]').forEach((b) => b.addEventListener('click', () => stages[b.dataset.r]?.replay()));
+
+  /* ---------- 1. sketch -> clean ---------- */
+  const PATHS = {
+    box: 'M44 46 C80 42 140 49 196 44 C200 70 193 92 198 116 C140 122 84 112 42 118 C39 92 46 70 44 46',
+    scrib: 'M232 46 L352 40 L236 62 L354 58 L238 80 L352 76 L240 98 L350 94',
+    hook: 'M44 168 C90 164 140 170 196 166 L174 150 M196 166 L174 182',
+  };
+  register('s1', (el, final) => {
+    el.innerHTML = `<svg viewBox="0 0 400 225">
+      <g id="cl" class="fade ${final ? '' : 'off'}">
+        <rect x="42" y="44" width="156" height="74" rx="4" class="ink"/><text x="120" y="88" text-anchor="middle" class="t" font-size="20">Sign in</text><text x="196" y="40" text-anchor="end" class="tag">button</text>
+        <path d="M232 52H352M232 68H352M232 84H352M232 100H300" class="ink grey"/><text x="352" y="40" text-anchor="end" class="tag">paragraph</text>
+        <path d="M44 166H196M176 152L196 166L176 180" class="ink"/><text x="196" y="150" text-anchor="end" class="tag">arrow</text>
+      </g>
+      <path id="p1" class="rough" d="${PATHS.box}" style="opacity:${final ? 0 : 1}"/>
+      <path id="p2" class="rough" d="${PATHS.scrib}" style="opacity:${final ? 0 : 1}"/>
+      <path id="p3" class="rough" d="${PATHS.hook}" style="opacity:${final ? 0 : 1}"/>
+    </svg>`;
+  }, async (el, w) => {
+    const draw = async (p, dur) => { const len = p.getTotalLength(); p.style.strokeDasharray = len; p.style.strokeDashoffset = len; p.getBoundingClientRect(); p.style.transition = `stroke-dashoffset ${dur}ms ease`; p.style.strokeDashoffset = 0; await w(dur + 250); };
+    const cl = $(el, '#cl'); const [p1, p2, p3] = ['#p1', '#p2', '#p3'].map((s) => $(el, s));
+    [p1, p2, p3].forEach((p) => { const l = p.getTotalLength(); p.style.strokeDasharray = l; p.style.strokeDashoffset = l; });
+    await w(500);
+    await draw(p1, 900); await draw(p2, 1100); await draw(p3, 800);
+    await w(300);
+    // "let go": every rough stroke turns into the clean shape
+    [p1, p2, p3].forEach((p) => { p.style.transition = 'opacity .4s'; p.style.opacity = 0; }); cl.classList.remove('off');
+    await w(2200);
+  });
+
+  /* ---------- 2. tap and type chain ---------- */
+  const STAMPS = [['/radio', 'radio buttons (Enter adds the next)'], ['/checkbox', 'checkboxes (Enter adds the next)'], ['/button', 'buttons side by side'], ['/input', 'a labelled text field'], ['/card', 'a titled box'], ['/list', 'list rows']];
+  register('s2', (el, final) => {
+    el.innerHTML = `<div id="cur" class="cursor" style="left:70%;top:80%">${arrow}</div><div id="rip" class="ripple"></div>
+      <svg id="sv" viewBox="0 0 400 225"></svg>
+      <div id="inl" class="inl" style="left:10%;top:4%;display:none"></div><div id="pop" class="pop" style="left:10%;top:17%;display:none"></div>`;
+    if (final) { $(el, '#sv').innerHTML = group(['Email', 'SMS', 'Push'], true, false); }
+  }, async (el, w) => {
+    const sv = $(el, '#sv'), inl = $(el, '#inl'), pop = $(el, '#pop'), cur = $(el, '#cur'), rip = $(el, '#rip');
+    const showPop = (q, sel) => { const items = STAMPS.filter(([n]) => n.slice(1).startsWith(q)).slice(0, 5); pop.innerHTML = items.map(([n, h], i) => `<div class="${i === sel ? 'on' : ''}"><b>${n}</b><span>${h}</span></div>`).join(''); pop.style.display = items.length ? 'block' : 'none'; };
+    const type = async (s, ms = 90) => { for (const ch of s) { inl.textContent += ch; await w(ms); } };
+    const move = async (x, y) => { cur.style.left = x + '%'; cur.style.top = y + '%'; await w(750); };
+    await move(12, 9); rip.style.left = '12%'; rip.style.top = '9%'; rip.classList.remove('go'); rip.getBoundingClientRect(); rip.classList.add('go'); await w(400);
+    sv.innerHTML = '';
+    await move(46, 62);                                                                              // the pointer steps out of the way while typing
+    inl.style.display = 'block'; inl.style.left = '10%'; inl.style.top = rowTop(0) + '%'; inl.textContent = ''; inl.classList.add('caret'); pop.style.top = (parseFloat(rowTop(0)) + 13) + '%';
+    await type('/'); showPop('', 0); await w(700);
+    for (const ch of 'radio') { await type(ch, 150); showPop(inl.textContent.slice(1), 0); }
+    await w(600); inl.textContent = '/radio '; pop.style.display = 'none'; await w(500);       // Tab completes, Enter commits
+    inl.style.display = 'none';
+    const labels = ['Email', 'SMS', 'Push'];
+    for (let i = 0; i < 3; i++) {
+      sv.innerHTML = group(labels.slice(0, i), false, true);                                       // the finished ones, and a blank ring for this one
+      inl.style.display = 'block'; inl.style.left = '17%'; inl.style.top = rowTop(i) + '%'; inl.textContent = '';
+      await w(450); await type(labels[i], 110); await w(350);
+    }
+    sv.innerHTML = group(labels, false, true);                                                    // Enter made a fourth blank one
+    inl.style.display = 'block'; inl.style.top = rowTop(3) + '%'; inl.textContent = ''; await w(900);
+    inl.style.display = 'none'; sv.innerHTML = group(labels, true, false); await w(300);          // Enter on an empty label ends; the border appears
+    el.appendChild(E('<div class="toast in">A border appears around the group</div>'));
+    await w(1800);
+  });
+  /** A radio group: the finished labels, optionally the group's border, optionally a blank ring waiting for its label. */
+  function group(labels, border, blank) {
+    const row = (i) => 28 + i * 31, x = 50;
+    let s = '';
+    if (border) s += `<rect x="${x - 20}" y="${row(0) - 24}" width="150" height="${labels.length * 31 + 6}" rx="5" class="ink"/>`;
+    labels.forEach((l, i) => { s += `<circle cx="${x}" cy="${row(i) - 6}" r="8" class="ink"/><text x="${x + 18}" y="${row(i)}" class="t" font-size="16">${l}</text>`; });
+    if (blank) s += `<circle cx="${x}" cy="${row(labels.length) - 6}" r="8" class="ink" style="stroke-dasharray:3 3"/>`;
+    return s;
+  }
+  const rowTop = (i) => ((28 + i * 31 - 19) / 225 * 100).toFixed(1);   // percent from the top of the stage
+
+  /* ---------- 3. Space and keys ---------- */
+  const TILES = [['F', 'Flow'], ['D', 'Draw'], ['T', 'Text'], ['V', 'Select'], ['E', 'Erase'], ['R', 'Review'], ['B', 'Save as part'], ['L', 'Link frame'], ['Q', 'Border'], ['I', 'Play']];
+  register('s3', (el, final) => {
+    const bar = ['Flow F', 'Draw D', 'Text T', 'Select V', 'Erase E', 'Review R'].map((t, i) => `<span class="pill" data-t="${t.split(' ')[0]}" style="${t.startsWith(final ? 'Select' : 'Draw') ? 'background:var(--accent);color:#fff;border-color:var(--accent)' : ''}">${t.replace(/ (\w)$/, ' <kbd>$1</kbd>')}</span>`).join('');
+    el.innerHTML = `<div class="abs" style="left:3%;top:4%;display:flex;gap:6px;flex-wrap:wrap" id="tb">${bar}</div>
+      <div class="abs" id="kb" style="left:3%;top:20%;font-size:12.5px;color:var(--mute)">${final ? '<kbd>tap</kbd> select &nbsp; <kbd>drag</kbd> box select &nbsp; <kbd>Shift+tap</kbd> add' : '<kbd>drag</kbd> draw a shape &nbsp; <kbd>hook the end</kbd> arrow'}</div>
+      <div id="ov" class="abs" style="left:14%;top:30%;width:72%;display:${final ? 'none' : 'none'};background:var(--panel);border:1px solid var(--accent);border-radius:10px;padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.2)">
+        <div style="font-weight:600;margin-bottom:6px">Keyboard shortcuts <span style="font-weight:400;color:var(--mute)">press a key to run it</span></div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px 10px;font-size:13px">${TILES.map(([k, n]) => `<div data-k="${k}" style="padding:2px 4px;border-radius:5px"><kbd>${k}</kbd> ${n}</div>`).join('')}</div></div>
+      <div id="kc" class="keycap"><kbd style="padding:4px 18px;font-size:14px">Space</kbd></div>`;
+  }, async (el, w) => {
+    const ov = $(el, '#ov'), kc = $(el, '#kc'), kb = $(el, '#kb');
+    await w(900); kc.classList.add('press'); await w(200); kc.classList.remove('press'); ov.style.display = 'block'; ov.classList.add('in'); await w(1500);
+    const v = $(el, '[data-k="V"]'); v.style.background = 'var(--chip)'; v.style.outline = '1px solid var(--accent)';
+    const kc2 = kc; kc2.innerHTML = '<kbd style="padding:4px 18px;font-size:14px">V</kbd>'; kc2.classList.add('press'); await w(350); kc2.classList.remove('press');
+    ov.style.display = 'none';
+    el.querySelectorAll('#tb .pill').forEach((p) => { const on = p.dataset.t === 'Select'; p.style.background = on ? 'var(--accent)' : ''; p.style.color = on ? '#fff' : ''; p.style.borderColor = on ? 'var(--accent)' : ''; });
+    kb.innerHTML = '<kbd>tap</kbd> select &nbsp; <kbd>drag</kbd> box select &nbsp; <kbd>Shift+tap</kbd> add';
+    el.appendChild(E('<div class="toast in">Select tool</div>'));
+    await w(1800);
+  });
+
+  /* ---------- 4. parts ---------- */
+  const navBar = (x, y, cls = '') => `<div class="abs ${cls}" style="left:${x}%;top:${y}%;width:46%;display:flex;gap:6px">${['Home', 'Products', 'Pricing', 'Sign in'].map((t) => `<div class="box sm" style="position:static;padding:3px 9px">${t}</div>`).join('')}</div>`;
+  register('s4', (el, final) => {
+    el.innerHTML = `<div class="abs" style="left:3%;top:6%;font-size:12px;color:var(--mute)">Frame 1</div>
+      <div id="nb">${navBar(4, 16)}</div><div id="sel" class="abs" style="left:3%;top:12%;width:49%;height:19%;border:1.6px dashed var(--accent);border-radius:4px;display:none"></div>
+      <div id="copy">${final ? navBar(4, 62, '') : ''}</div>
+      <div class="abs" id="panel" style="right:3%;top:6%;width:28%;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px"><b>Parts</b><div id="plist" style="color:var(--mute);margin-top:3px">${final ? '<span style="color:var(--accent)">/nav-bar</span> 568×44' : 'none yet'}</div></div>
+      <div id="dlg" class="abs" style="left:24%;top:32%;width:50%;background:var(--panel);border:1px solid var(--accent);border-radius:10px;padding:10px;display:none;box-shadow:0 10px 30px rgba(0,0,0,.2)"><b>Save selection as a part</b><div class="inl caret" id="dn" style="position:static;margin-top:6px;display:block;width:60%"></div></div>
+      <div id="inl" class="inl" style="left:6%;top:56%;display:none"></div><div id="pop" class="pop" style="left:6%;top:68%;display:none;min-width:230px"></div>
+      <div id="kc" class="keycap"><kbd style="padding:4px 18px;font-size:14px">B</kbd></div><div id="cur" class="cursor" style="left:60%;top:84%">${arrow}</div><div id="rip" class="ripple"></div>`;
+  }, async (el, w) => {
+    const sel = $(el, '#sel'), dlg = $(el, '#dlg'), dn = $(el, '#dn'), kc = $(el, '#kc'), plist = $(el, '#plist'), inl = $(el, '#inl'), pop = $(el, '#pop'), cur = $(el, '#cur'), rip = $(el, '#rip');
+    const move = async (x, y) => { cur.style.left = x + '%'; cur.style.top = y + '%'; await w(800); };
+    const click = async (x, y) => { rip.style.left = x + '%'; rip.style.top = y + '%'; rip.classList.remove('go'); rip.getBoundingClientRect(); rip.classList.add('go'); await w(350); };
+    await w(500); await move(5, 14); sel.style.display = 'block'; sel.classList.add('in'); await w(900);
+    kc.classList.add('press'); await w(200); kc.classList.remove('press'); dlg.style.display = 'block'; dlg.classList.add('in'); await w(500);
+    for (const ch of 'nav-bar') { dn.textContent += ch; await w(130); }
+    await w(400); dlg.style.display = 'none'; sel.style.display = 'none'; plist.innerHTML = '<span style="color:var(--accent)">/nav-bar</span> 568×44'; el.appendChild(E('<div class="toast in" id="tt">Saved /nav-bar</div>')); await w(1400); $(el, '#tt').remove();
+    await move(8, 60); await click(8, 60);
+    inl.style.display = 'block'; inl.classList.add('caret'); inl.textContent = '';
+    for (const ch of '/nav') { inl.textContent += ch; await w(160); if (inl.textContent.length >= 1) { pop.innerHTML = '<div class="on"><b>/nav-bar</b><span>your saved part, 568×44</span></div>'; pop.style.display = 'block'; } }
+    await w(600); inl.textContent = '/nav-bar '; await w(450); inl.style.display = 'none'; pop.style.display = 'none';
+    $(el, '#copy').innerHTML = navBar(4, 62, 'in'); await w(2000);
+  });
+
+  /* ---------- 5. AI loop ---------- */
+  register('s5', (el, final) => {
+    const board = (btn, note, done) => `<div class="abs" id="bd" style="left:3%;top:6%;width:50%;height:84%;background:var(--paper);border:1px solid var(--line);border-radius:8px;overflow:hidden">
+        <div id="h" class="box sm in" style="left:6%;top:7%;width:88%;height:14%;justify-content:flex-start;padding-left:10px;${final ? '' : 'display:none'}">Acme</div>
+        <div id="i" class="box sm in" style="left:6%;top:30%;width:88%;height:15%;justify-content:flex-start;padding-left:10px;color:var(--mute);${final ? '' : 'display:none'}">Email</div>
+        <div id="b" class="box sm in" style="left:6%;top:55%;width:36%;height:17%;${final ? 'background:var(--accent);color:#fff;border-color:var(--accent)' : 'display:none'}">Sign in</div>
+        <div id="pin" class="pin in" style="left:42%;top:50%;display:none">1</div>
+      </div>`;
+    el.innerHTML = board() + `<div class="abs" style="right:3%;top:6%;width:42%;height:84%;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px"><b>Notes</b><div id="nt" style="margin-top:6px;color:var(--mute)">${final ? '<span style="text-decoration:line-through">Make Sign in primary</span> ✓<div style="font-size:11px">AI: filled the button, now primary</div>' : 'none yet'}</div></div>
+      <div id="chat"></div>`;
+  }, async (el, w) => {
+    const chat = $(el, '#chat'), say = (cls, html, style) => { const c = E(`<div class="chat ${cls} in" style="${style}">${html}</div>`); chat.appendChild(c); return c; };
+    await w(500);
+    let c = say('ai', 'AI: <code>draft_board</code> login screen', 'left:3%;bottom:2%'); await w(900);
+    for (const id of ['#h', '#i', '#b']) { const n = $(el, id); n.style.display = ''; n.classList.remove('in'); n.getBoundingClientRect(); n.classList.add('in'); if (id === '#b') { n.style.background = 'var(--paper)'; n.style.color = ''; n.style.borderColor = ''; } await w(500); }
+    c.remove(); await w(400);
+    $(el, '#pin').style.display = 'flex'; $(el, '#nt').innerHTML = 'Make Sign in primary'; $(el, '#nt').style.color = 'var(--ink)';
+    c = say('', 'You: <i>select the button, write a note</i>', 'right:3%;bottom:2%'); await w(1600); c.remove();
+    c = say('', 'You (in chat): <i>I left notes</i>', 'right:3%;bottom:2%'); await w(1400); c.remove();
+    c = say('ai', 'AI: <code>get_review</code> then <code>edit_element</code>', 'left:3%;bottom:2%'); await w(1500);
+    const b = $(el, '#b'); b.style.transition = 'all .5s'; b.style.background = 'var(--accent)'; b.style.color = '#fff'; b.style.borderColor = 'var(--accent)'; await w(900);
+    $(el, '#nt').innerHTML = '<span style="text-decoration:line-through;color:var(--mute)">Make Sign in primary</span> <span style="color:var(--ok)">✓</span><div style="font-size:11px;color:var(--mute)">AI: filled the button, now primary</div>';
+    $(el, '#pin').style.display = 'none'; c.remove(); say('ai', 'AI: <code>resolve_notes</code>', 'left:3%;bottom:2%'); await w(1800);
+  });
+})();
+</script>
+</body>
+</html>

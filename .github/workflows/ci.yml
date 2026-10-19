@@ -1,0 +1,26 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request:
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix: { os: [ubuntu-latest, windows-latest, macos-latest] }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run dist
+      - name: The downloadable files run with plain Node, no node_modules
+        shell: bash
+        run: |
+          mkdir /tmp/plain && cp dist/axsquiggle.mjs dist/axsquiggle.html /tmp/plain/
+          cd /tmp/plain && AXSQ_DIR=/tmp/plain/data AXSQ_PORT=4799 node axsquiggle.mjs bridge & sleep 3
+          curl -sf http://127.0.0.1:4799/ | grep -q "axSquiggle"
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with: { name: axsquiggle, path: "dist/axsquiggle.html\ndist/axsquiggle.mjs" }

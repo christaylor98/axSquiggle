@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>axSquiggle</title>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <b class="brand">axSquiggle</b><small id="ver" class="ver"></small>
+    <button id="bSearch" title="Search all frames (Ctrl/Cmd+F)" aria-label="Search all frames">Find<kbd>Ctrl+F</kbd></button>
+    <div class="group tools" role="toolbar" aria-label="Tools">
+      <button data-tool="flow" title="Flow: draw, type, select and move without switching tools (F)">Flow<kbd>F</kbd></button>
+      <button data-tool="draw" title="Draw (D)">Draw<kbd>D</kbd></button>
+      <button data-tool="sketch" title="Sketch: keep strokes exactly as drawn, no clean-up (S). Alt+drag does the same in any mode.">Sketch<kbd>S</kbd></button>
+      <button data-tool="text" title="Text (T)">Text<kbd>T</kbd></button>
+      <button data-tool="select" title="Select (V)">Select<kbd>V</kbd></button>
+      <button data-tool="erase" title="Erase (E)">Erase<kbd>E</kbd></button>
+      <button data-tool="review" title="Review (R)">Review<kbd>R</kbd></button>
+    </div>
+    <div class="group opts">
+      <button id="tGrid" class="toggle" title="Grid snap (G)">Grid<kbd>G</kbd></button>
+      <button id="tRoles" class="toggle" title="Show role tags (O)">Roles<kbd>O</kbd></button>
+      <button id="bUndo" title="Undo (Esc, or Ctrl/Cmd+Z; Shift+Esc redoes)">Undo<kbd>Esc</kbd></button>
+    </div>
+    <div class="group right">
+      <button id="bNew" title="Start a new, empty drawing (Undo brings the old one back)">New</button>
+      <button id="bOpen" title="Open a board file (Ctrl/Cmd+O, or drop a .json file on the canvas)">Open</button>
+      <button id="bSave" title="Save the board to a file (Ctrl/Cmd+S; Shift for Save as)">Save</button>
+      <button id="bShot" title="Add a photo of a sketch or a screenshot behind the frame (or paste / drop one). Then trace it (K), or ask your AI (over MCP) to build it.">Image<kbd>P</kbd></button>
+      <button id="bShotX" hidden>Remove screenshot</button>
+      <button id="bBoards" title="Boards: switch between the AI's storyboards or start a new one (Shift+B)" hidden></button>
+      <button id="bAi" title="MCP bridge: connect this board to an AI that works through MCP">MCP</button>
+      <button id="bExport" class="primary">Export<kbd>W</kbd></button>
+      <button id="bHelp" title="Help: the animated how-to guide (opens in a new tab). Space shows every shortcut." aria-label="Help">?</button>
+      <button id="bPanel" class="panelbtn" aria-label="Toggle side panel">☰</button>
+    </div>
+    <input id="fileIn" type="file" accept="image/*" hidden>
+  </header>
+  <div id="keybar" class="keybar" aria-live="polite"></div>
+  <div id="banner" class="banner" hidden>This is an <b>example</b> board (login, dashboard, phone task list). <button id="bFresh">Start fresh</button></div>
+  <main>
+    <section class="stage">
+      <button id="zoomchip" class="zoomchip" hidden title="Click to fit the whole frame (0)">100%</button>
+      <div class="canvaswrap" id="wrap"><canvas id="cv"></canvas><div id="slash" class="slash" role="listbox" hidden></div><textarea id="inl" class="inl" rows="1" spellcheck="false" hidden aria-label="Text. Enter commits, Shift+Enter adds a line; start a later line with spaces for a sub-label"></textarea></div>
+      <div class="reviewbar" id="rbar" hidden>
+        <div class="chiprow"><span id="focusChip" class="focuschip">Tap or loop elements (or select them) to say what a note is about</span><button id="bFocusX" hidden>Clear</button></div>
+        <textarea id="change" rows="2" placeholder="What should change? Notes are read by your AI over MCP (get_review)"></textarea>
+        <div class="btns"><button id="bNote" class="primary">Add note</button></div>
+        <div class="notesbox"><div class="nhead">Notes <span id="ncount"></span></div><ol id="notes" class="notes"></ol><p id="nempty" class="hint">No notes yet. Loop what a note is about, write it above, Add note.</p></div>
+      </div>
+    </section>
+    <aside class="panel" id="panel">
+      <div class="tabs" id="ptabs"><button data-p="outline" class="on">Outline</button><button data-p="parts">Parts</button><button data-p="legend">Gestures</button></div>
+      <div id="pOutline" class="pane"></div>
+      <div id="pParts" class="pane parts" hidden></div>
+      <div id="pLegend" class="pane legend" hidden></div>
+    </aside>
+  </main>
+  <footer class="strip">
+    <div class="thumbs" id="thumbs"></div>
+    <button id="bAdd">+ Frame</button>
+    <select id="device" aria-label="Device"><option value="desktop">Desktop 960×600</option><option value="phone">Phone 390×780</option></select>
+    <input id="caption" placeholder="Caption for this frame" aria-label="Caption">
+  </footer>
+</div>
+<dialog id="dExport"><div class="dhead"><b>Export</b><button class="dclose" aria-label="Close">×</button></div><div class="tabs"></div><div class="body"></div></dialog>
+<dialog id="dSearch"><div class="dhead"><b>Search all frames <small>Enter jumps, Esc closes</small></b><button class="dclose" aria-label="Close">×</button></div>
+  <div class="body"><input id="sq" type="search" autocomplete="off" spellcheck="false" placeholder="Labels, paragraph text, kinds (button), captions, notes" aria-label="Search all frames"><div id="sres" class="sres" role="listbox"></div></div></dialog>
+<dialog id="dBridge"><div class="dhead"><b>MCP bridge</b><button class="dclose" aria-label="Close">×</button></div>
+  <div class="body form">
+    <p class="hint">All AI works through MCP. Run <code>npm run bridge</code> (or add <code>npm run mcp</code> as an MCP server in your AI client) and connect here. Your AI drafts screens with its tools; you edit them and write review notes; when you want it to act, tell it in its own chat to <b>get_review</b>: it fetches your notes and what you changed, actions them and replies on each note.</p>
+    <label>Bridge URL <input id="brUrl" placeholder="http://127.0.0.1:4747" spellcheck="false" autocomplete="off"></label>
+    <label>Token <input id="brTok" type="password" autocomplete="off" spellcheck="false"></label>
+    <p id="brStatus" class="hint"></p>
+    <div class="btns"><button id="brGo" class="primary">Connect</button><button id="brOff">Disconnect</button></div>
+  </div></dialog>
+<dialog id="dBoards"><div class="dhead"><b>Boards <small>Enter opens, or makes a new one from the name you typed</small></b><button class="dclose" aria-label="Close">×</button></div>
+  <div class="body"><input id="bq" autocomplete="off" spellcheck="false" placeholder="Board name" aria-label="Board name"><div id="bres" class="sres" role="listbox"></div></div></dialog>
+<dialog id="dLink"><div class="dhead"><b id="linkTitle">Link to frame <small>press its number, or Up/Down and Enter</small></b><button class="dclose" aria-label="Close">×</button></div>
+  <div class="body"><div id="lres" class="sres" role="listbox" tabindex="0"></div></div></dialog>
+<div id="playbar" class="playbar" hidden><b>Play</b> click the dashed links · Backspace back · ←/→ frames · Esc exits</div>
+<dialog id="dAsk"><form method="dialog"><div class="dhead"><b id="askTitle"></b></div>
+  <div class="body"><input id="askIn" autocomplete="off" spellcheck="false"><p class="hint" id="askHint"></p>
+  <div class="btns"><button class="primary" value="ok">OK</button><button type="button" id="askNo">Cancel</button></div></div></form></dialog>
+<dialog id="dSure"><form method="dialog"><div class="dhead"><b id="sureTitle"></b></div>
+  <div class="body"><p class="hint" id="sureText"></p><div class="btns"><button class="primary" value="save">Save first</button><button value="discard">Don't save</button><button value="cancel">Cancel</button></div></div></form></dialog>
+<dialog id="dKeys"><div class="pal" tabindex="-1"><div class="palhead"><input id="palq" type="search" placeholder="Press a key to run it  ·  Tab or / to search" autocomplete="off" spellcheck="false" aria-label="Search actions, stamps and parts"><button class="dclose" aria-label="Close">×</button></div><div id="palbody" class="palbody"></div></div></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

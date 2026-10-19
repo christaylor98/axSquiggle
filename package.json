@@ -1,0 +1,32 @@
+{
+  "name": "axsquiggle",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Fast wireframe and storyboard tool for writing specs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "bridge": "tsx server/main.ts bridge",
+    "mcp": "tsx server/main.ts mcp",
+    "dist": "npm run build && node scripts/build-single.mjs && node scripts/build-bridge.mjs",
+    "start": "tsx server/main.ts bridge --open"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@xmldom/xmldom": "^0.9.12",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4",
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "@fontsource/kalam": "^5.3.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "zod": "^4.6.7"
+  }
+}

@@ -1,0 +1,6 @@
+node_modules
+dist
+*.log
+.playwright-mcp
+*.figcraft
+scripts/figcraft-live.mjs
