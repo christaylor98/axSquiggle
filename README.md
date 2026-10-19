@@ -19,6 +19,12 @@ Static, offline, no backend, no accounts.
   <img src="docs/img/preview-phone.png" alt="A phone task list preview" width="36%">
 </p>
 
+**Work with your AI.** An AI client drafts the board over MCP, you review it in the app, and it acts on your notes.
+
+![An AI drafts a sign-up screen from a prompt, the user loops the Password field and leaves a note, and the AI updates the board and replies](docs/img/ai-review-loop.png)
+
+*The prompt is an example. The draft, the note and the update are real bridge calls (`draft_board`, `get_review`, `edit_frame`, `resolve_notes`), shown as the app displayed them.*
+
 ## Run it (pick one)
 
 1. **Just the app.** Download `axsquiggle.html` and double-click it. One file, works offline, nothing to install. Also hostable anywhere as a
