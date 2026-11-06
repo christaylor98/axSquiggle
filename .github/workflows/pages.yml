@@ -14,8 +14,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
-      - run: npm run dist
-      - run: mkdir _site && cp dist/axsquiggle.html _site/index.html && cp dist/how-to.html _site/how-to.html
+      - run: npm run site
       - uses: actions/upload-pages-artifact@v3
         with: { path: _site }
       - id: deploy

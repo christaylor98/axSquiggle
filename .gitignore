@@ -4,3 +4,4 @@ dist
 .playwright-mcp
 *.figcraft
 scripts/figcraft-live.mjs
+_site
