@@ -178,3 +178,9 @@ dialog .body p { margin: 0; }
 .row .picrow .picth { width: 28px; height: 28px; object-fit: cover; border-radius: 3px; border: 1px solid var(--line, #ccc); flex: none; }
 .row .picrow .picname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row .picrow button { font-size: 12px; padding: 1px 7px; flex: none; }
+
+/* hosted bridge: address and command with a Copy button */
+.copyrow { display: flex; gap: 6px; align-items: center; }
+.copyrow input { flex: 1; min-width: 0; font: 12px ui-monospace, Menlo, Consolas, monospace; }
+.steps { padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+#brOwn > summary { cursor: pointer; margin: 10px 0 6px; }

@@ -104,7 +104,7 @@ Shift+V (or Export → Preview) opens a realistic preview of every screen: butto
   `layout` (outline builder and row edits), `exporters` (SVG, Figma SVG, Excalidraw, Markdown, HTML),
   `model` (validation, example board, raw JSON), `trace` (photo of a sketch to shapes).
   `agent` (read/edit/diff/review functions an outside AI uses), `connect` (arrow attach + routing), `links`, `parts`, `search`.
-- `src/ui/` canvas, panels, dialogs. `server/` the AI bridge (HTTP + MCP). `tests/` Vitest suites.
+- `src/ui/` canvas, panels, dialogs. `server/` the AI bridge (HTTP + MCP). `worker/` the same bridge as a Cloudflare Worker for the hosted app (one-click **Activate MCP**, no install; see `worker/README.md`). `tests/` Vitest suites.
 
 ## 💾 Saving and opening
 

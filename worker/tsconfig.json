@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", "module": "ESNext", "moduleResolution": "bundler",
+    "lib": ["ES2022"], "strict": true, "skipLibCheck": true, "isolatedModules": true, "noEmit": true,
+    "types": ["@cloudflare/workers-types", "node"]
+  },
+  "include": ["./*.ts", "../server/tools.ts", "../server/state.ts", "../server/mcp.ts", "../src/core"]
+}

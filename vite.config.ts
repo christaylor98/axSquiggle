@@ -10,7 +10,8 @@ const build = (() => {
 
 export default defineConfig({
   base: './',
-  define: { __BUILD__: JSON.stringify(build) },
+  // VITE_HOSTED_BRIDGE=https://squiggle-mcp.example.dev turns on the "Activate MCP" button (see worker/); empty for the plain app
+  define: { __BUILD__: JSON.stringify(build), __HOSTED_BRIDGE__: JSON.stringify(process.env.VITE_HOSTED_BRIDGE ?? '') },
   // Everything (fonts included) goes into the JS/CSS so scripts/build-single.mjs can make one self-contained file.
   build: { target: 'es2022', assetsInlineLimit: 100_000_000, cssCodeSplit: false, modulePreload: false },
   test: { include: ['tests/**/*.test.ts'] },

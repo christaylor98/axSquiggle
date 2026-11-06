@@ -3,7 +3,9 @@
 import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
-execSync('npm run dist', { stdio: 'inherit' });
+// the hosted app offers one-click "Activate MCP" against the hosted bridge (worker/)
+const bridge = process.env.VITE_HOSTED_BRIDGE ?? 'https://squiggle-mcp.axstack.dev';
+execSync('npm run dist', { stdio: 'inherit', env: { ...process.env, VITE_HOSTED_BRIDGE: bridge } });
 rmSync('_site', { recursive: true, force: true });
 mkdirSync('_site/media', { recursive: true });
 cpSync('dist/axsquiggle.html', '_site/app.html');
@@ -37,4 +39,6 @@ code{background:#0002;border-radius:6px;padding:2px 7px}
 <section><h2>2. Replicate</h2><p>Drop in a screenshot of a screen you already have; your AI rebuilds it as a wireframe.</p><img src="media/demo-replicate.gif" alt="A screenshot rebuilt as a wireframe by an AI" loading="lazy"></section>
 <section><h2>3. Change it, send it back</h2><p>Edit, leave a note, tell your AI. It acts and replies on the note.</p><img src="media/demo-review.gif" alt="Review note actioned by an AI" loading="lazy"></section>
 </main></body></html>`);
-console.log('_site ready');
+// leave dist/ as the plain app (no hosted button): that is what gets downloaded and run locally
+execSync('npm run dist', { stdio: 'inherit', env: { ...process.env, VITE_HOSTED_BRIDGE: '' } });
+console.log(`_site ready (hosted bridge: ${bridge})`);

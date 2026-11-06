@@ -6,6 +6,7 @@ import { cloneBoard, type Board } from '../src/core/types';
 /** 'board': the open board's content changed or another board was opened. 'boards': the list of boards changed. */
 type Listener = (e: { type: 'board' | 'boards'; rev: number; name: string }) => void;
 
+export interface Snapshot { current: string; clock: number; slots: { name: string; board: Board; baseline: Board | null; rev: number; at: number }[] }
 interface Slot { name: string; board: Board; baseline: Board | null; rev: number; at: number }
 interface Registry { slots: Map<string, Slot>; current: string; clock: number; subs: Set<Listener>; dir?: string }
 
@@ -41,6 +42,23 @@ export class BoardServer {
       const first = readdirSync(boards).filter((f) => f.endsWith('.json')).sort()[0];
       if (first) this.reg.current = first.slice(0, -5);
     }
+  }
+
+  /** Everything needed to rebuild these boards later (the hosted bridge keeps it in a Durable Object instead of files). */
+  snapshot(): Snapshot {
+    return { current: this.reg.current, clock: this.reg.clock, slots: [...this.reg.slots.values()].map((s) => ({ name: s.name, board: s.board, baseline: s.baseline, rev: s.rev, at: s.at })) };
+  }
+
+  /** Replace the boards with a snapshot (invalid boards are dropped; an empty result leaves a blank default). */
+  restore(snap: Snapshot) {
+    this.reg.slots.clear();
+    for (const x of snap.slots) {
+      const board = validateBoard(x.board);
+      if (board) this.reg.slots.set(x.name, { name: x.name, board, baseline: validateBoard(x.baseline), rev: x.rev, at: x.at });
+    }
+    this.reg.clock = Math.max(snap.clock, ...[...this.reg.slots.values()].map((s) => s.rev), 0);
+    this.reg.current = this.reg.slots.has(snap.current) ? snap.current : [...this.reg.slots.keys()][0] ?? DEFAULT_BOARD;
+    if (!this.reg.slots.has(this.reg.current)) this.slotFor(this.reg.current, true);
   }
 
   private file(name: string) { return this.reg.dir ? join(this.reg.dir, 'boards', name + '.json') : undefined; }

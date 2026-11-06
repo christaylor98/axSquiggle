@@ -5,3 +5,5 @@ dist
 *.figcraft
 scripts/figcraft-live.mjs
 _site
+.wrangler
+worker/.dev.vars

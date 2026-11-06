@@ -1,0 +1,26 @@
+# The hosted axSquiggle bridge: the same tools as `node axsquiggle.mjs`, reachable by URL.
+# Deploy:  npx wrangler secret put SESSION_KEY --config worker/wrangler.toml   (once; any long random string)
+#          npx wrangler deploy --config worker/wrangler.toml
+name = "axsquiggle-mcp"
+main = "index.ts"
+compatibility_date = "2025-10-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+# After the first deploy, add the custom domain in the dashboard (Workers & Pages > axsquiggle-mcp > Settings > Domains),
+# or uncomment (the zone must be on this account):
+# routes = [{ pattern = "squiggle-mcp.axstack.dev", custom_domain = true }]
+
+[vars]
+# Web pages allowed to call the bridge from a browser (localhost, 127.0.0.1 and file:// are always allowed).
+ALLOWED_ORIGINS = "https://squiggle.axstack.dev"
+# Days a session survives without use before its boards are deleted.
+SESSION_DAYS = "30"
+
+[[durable_objects.bindings]]
+name = "SESSION"
+class_name = "Session"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Session"]

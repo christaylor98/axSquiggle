@@ -1091,6 +1091,7 @@ export function startApp() {
   const paintSync = () => {
     $('bAi').classList.toggle('on', sync.state === 'on');
     $('bAi').classList.toggle('err', sync.state === 'error');
+    paintHosted();
     $('brStatus').textContent = { off: 'Not connected.', connecting: 'Connecting...', on: 'Connected. Your edits and notes are available to the AI through MCP; its edits arrive here as an undoable change.', error: 'The bridge is not answering. Is it running?' }[sync.state];
   };
   const dBoards = $<HTMLDialogElement>('dBoards'), bq = $<HTMLInputElement>('bq'), bres = $('bres');
@@ -1140,10 +1141,44 @@ export function startApp() {
     b.hidden = sync.state !== 'on' || !sync.name;
     b.textContent = sync.name;
   };
+  // One-click hosted bridge ("Activate MCP"), only in builds made with VITE_HOSTED_BRIDGE.
+  const hosted = typeof __HOSTED_BRIDGE__ === 'string' ? __HOSTED_BRIDGE__.replace(/\/$/, '') : '';
+  const onHosted = () => !!hosted && !!sync.config && sync.config.url.startsWith(`${hosted}/s/`);
+  const paintHosted = () => {
+    $('brHosted').hidden = !hosted;
+    $('brOwnSum').hidden = !hosted;
+    if (!hosted) return;
+    const live = onHosted() && sync.state !== 'off';
+    $('brAct').hidden = live; $('brLive').hidden = !live;
+    if (live) {
+      const mcp = `${sync.config!.url}/mcp`;
+      $<HTMLInputElement>('brMcp').value = mcp;
+      $<HTMLInputElement>('brCc').value = `claude mcp add --transport http axsquiggle ${mcp}`;
+    }
+  };
+  const copyFrom = (inputId: string) => async () => {
+    const el = $<HTMLInputElement>(inputId);
+    try { await navigator.clipboard.writeText(el.value); toast('Copied'); } catch { el.select(); toast('Press Ctrl/Cmd+C to copy'); }
+  };
+  $('brMcpCopy').onclick = copyFrom('brMcp');
+  $('brCcCopy').onclick = copyFrom('brCc');
+  $('brActivate').onclick = async () => {
+    const b = $<HTMLButtonElement>('brActivate');
+    b.disabled = true;
+    try {
+      const r = await fetch(`${hosted}/api/sessions`, { method: 'POST' });
+      if (!r.ok) throw new Error(`the server said ${r.status}`);
+      const j = (await r.json()) as { url: string; token: string };
+      if (await sync.connect({ url: j.url, token: j.token })) paintHosted();
+    } catch (e) { toast(`Could not activate MCP: ${(e as Error).message}`); }
+    finally { b.disabled = false; }
+  };
   $('bAi').onclick = () => {
     $<HTMLInputElement>('brUrl').value = sync.config?.url ?? (window as unknown as { __AXSQ__?: { url?: string } }).__AXSQ__?.url ?? 'http://127.0.0.1:4747';
     $<HTMLInputElement>('brTok').value = sync.config?.token ?? '';
-    paintSync(); $<HTMLDialogElement>('dBridge').showModal();
+    paintSync(); paintHosted();
+    ($('brOwn') as HTMLDetailsElement).open = !hosted || (!onHosted() && sync.state !== 'off');
+    $<HTMLDialogElement>('dBridge').showModal();
   };
   $('brGo').onclick = async () => {
     const url = $<HTMLInputElement>('brUrl').value.trim(), token = $<HTMLInputElement>('brTok').value.trim();

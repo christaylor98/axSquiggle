@@ -10,22 +10,27 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p worker/tsconfig.json",
     "bridge": "tsx server/main.ts bridge",
     "mcp": "tsx server/main.ts mcp",
     "dist": "npm run build && node scripts/build-single.mjs && node scripts/build-bridge.mjs",
     "start": "tsx server/main.ts bridge --open",
     "demo": "node scripts/demo/record.mjs",
-    "site": "node scripts/build-site.mjs"
+    "site": "node scripts/build-site.mjs",
+    "worker:dev": "wrangler dev --local --port 8788 --config worker/wrangler.toml",
+    "worker:smoke": "node worker/smoke.mjs",
+    "worker:deploy": "wrangler deploy --config worker/wrangler.toml"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261106.1",
     "@types/node": "^26.6.5",
     "@xmldom/xmldom": "^0.9.12",
+    "esbuild": "^0.28.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
     "vitest": "^5.0.4",
-    "esbuild": "^0.28.2"
+    "wrangler": "^4.158.0"
   },
   "dependencies": {
     "@fontsource/kalam": "^5.3.0",

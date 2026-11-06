@@ -71,11 +71,28 @@
   <div class="body"><input id="sq" type="search" autocomplete="off" spellcheck="false" placeholder="Labels, paragraph text, kinds (button), captions, notes" aria-label="Search all frames"><div id="sres" class="sres" role="listbox"></div></div></dialog>
 <dialog id="dBridge"><div class="dhead"><b>MCP bridge</b><button class="dclose" aria-label="Close">×</button></div>
   <div class="body form">
+    <div id="brHosted" hidden>
+      <div id="brAct">
+        <p class="hint"><b>One click.</b> Activate MCP gives this board a private address. Add it to your AI (Claude, Claude Code or any MCP client) and the AI and this page share one board. Your boards are kept on our server for 30 days of inactivity, then deleted.</p>
+        <div class="btns"><button id="brActivate" class="primary">Activate MCP</button></div>
+      </div>
+      <div id="brLive" hidden>
+        <p class="hint"><b>Active.</b> Add this address to your AI as an MCP server. Keep it private: anyone with it can read and change this board.</p>
+        <label>MCP address <span class="copyrow"><input id="brMcp" readonly spellcheck="false"><button id="brMcpCopy">Copy</button></span></label>
+        <ol class="hint steps">
+          <li><b>Claude (claude.ai / desktop):</b> Settings, Connectors, Add custom connector, paste the address.</li>
+          <li><b>Claude Code:</b> <span class="copyrow"><input id="brCc" readonly spellcheck="false"><button id="brCcCopy">Copy</button></span></li>
+          <li>Then tell your AI: <i>"Use axSquiggle to draft a sign-up screen."</i></li>
+        </ol>
+      </div>
+    </div>
+    <details id="brOwn" open><summary id="brOwnSum" class="hint" hidden>Run it on my own machine instead (nothing leaves your computer)</summary>
     <p class="hint">All AI works through MCP. Run <code>npm run bridge</code> (or add <code>npm run mcp</code> as an MCP server in your AI client) and connect here. Your AI drafts screens with its tools; you edit them and write review notes; when you want it to act, tell it in its own chat to <b>get_review</b>: it fetches your notes and what you changed, actions them and replies on each note.</p>
     <label>Bridge URL <input id="brUrl" placeholder="http://127.0.0.1:4747" spellcheck="false" autocomplete="off"></label>
     <label>Token <input id="brTok" type="password" autocomplete="off" spellcheck="false"></label>
     <p id="brStatus" class="hint"></p>
     <div class="btns"><button id="brGo" class="primary">Connect</button><button id="brOff">Disconnect</button></div>
+    </details>
   </div></dialog>
 <dialog id="dBoards"><div class="dhead"><b>Boards <small>Enter opens, or makes a new one from the name you typed</small></b><button class="dclose" aria-label="Close">×</button></div>
   <div class="body"><input id="bq" autocomplete="off" spellcheck="false" placeholder="Board name" aria-label="Board name"><div id="bres" class="sres" role="listbox"></div></div></dialog>
