@@ -1,0 +1,28 @@
+<!doctype html><meta charset="utf-8"><title>Existing app: Profile settings</title>
+<style>
+*{box-sizing:border-box}body{margin:0;width:960px;height:600px;font:15px/1.4 system-ui,sans-serif;color:#1c2430;background:#f4f6fa;overflow:hidden}
+header{height:56px;background:#14213d;color:#fff;display:flex;align-items:center;padding:0 24px;gap:28px}
+header b{font-size:18px;margin-right:auto}header span{opacity:.8}
+main{display:flex;gap:24px;padding:24px}
+aside{width:210px;background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 3px #0002}
+aside div{padding:9px 10px;border-radius:6px;margin-bottom:4px}aside .on{background:#e7eefc;color:#1d4ed8;font-weight:600}
+section{flex:1;background:#fff;border-radius:10px;padding:22px 26px;box-shadow:0 1px 3px #0002}
+h1{margin:0 0 16px;font-size:22px}
+.who{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+.av{width:64px;height:64px;border-radius:50%;background:#9db4e8}
+label{display:block;font-size:12px;font-weight:600;color:#566;margin:12px 0 4px}
+.in{border:1px solid #c5ccd8;border-radius:6px;padding:9px 12px;color:#334}
+.chk{display:flex;gap:10px;align-items:center;margin:8px 0}.chk i{width:16px;height:16px;border:2px solid #1d4ed8;border-radius:3px;display:inline-block}
+.btns{display:flex;gap:12px;margin-top:20px}.btn{padding:10px 22px;border-radius:6px;border:1px solid #1d4ed8;color:#1d4ed8;font-weight:600}.btn.p{background:#1d4ed8;color:#fff}
+</style>
+<header><b>Acme Pay</b><span>Dashboard</span><span>Payments</span><span>Settings</span></header>
+<main>
+<aside><div class="on">Profile</div><div>Security</div><div>Notifications</div><div>Billing</div></aside>
+<section><h1>Profile settings</h1>
+<div class="who"><div class="av"></div><div class="btn">Change photo</div></div>
+<label>Full name</label><div class="in">Jordan Lee</div>
+<label>Email</label><div class="in">jordan@acme.example</div>
+<label>Notifications</label>
+<div class="chk"><i></i>Email me about payments</div><div class="chk"><i></i>Weekly summary</div>
+<div class="btns"><div class="btn p">Save changes</div><div class="btn">Cancel</div></div>
+</section></main>

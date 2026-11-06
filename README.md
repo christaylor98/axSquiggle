@@ -17,6 +17,26 @@
 
 <p align="center"><sub>✏️ <b>Sketch or type it.</b> The outline on the right is the same drawing as text.</sub></p>
 
+## ▶️ Up and running in 5 minutes
+
+<p align="center"><a href="docs/video/axsquiggle-in-5-minutes.mp4"><img src="docs/img/demo-poster.png" alt="Video: run the bridge, connect your AI over MCP, replicate a screenshot as a wireframe, edit it, send it back" width="100%"></a></p>
+
+<p align="center"><sub>🎬 <a href="docs/video/axsquiggle-in-5-minutes.mp4"><b>Watch the 65-second walkthrough</b></a>: run it, connect your AI, replicate an existing screen, change it, send it back.</sub></p>
+
+**1. Connect.** Run the bridge, add it to your AI client, press **MCP** in the app and paste the address and token.
+
+<p align="center"><img src="docs/img/demo-connect.gif" alt="Animated: node axsquiggle.mjs, claude mcp add, then the MCP dialog connecting the app" width="100%"></p>
+
+**2. Replicate.** Drop a screenshot of a screen you already have onto a frame and ask your AI to build it. It reads the image through `get_review` and writes the wireframe with `edit_frame`.
+
+<p align="center"><img src="docs/img/demo-replicate.gif" alt="Animated: a screenshot dropped behind a frame, the AI rebuilds it as a wireframe" width="100%"></p>
+
+**3. Change it and send it back.** Edit the board, tap what bothers you, write a note, then tell your AI. It gets your notes and your edits, acts on them and replies on the note.
+
+<p align="center"><img src="docs/img/demo-review.gif" alt="Animated: the user adds a field, leaves a note on a button, the AI renames the button and resolves the note" width="100%"></p>
+
+<sub>The AI side of these recordings is scripted: it makes the same tool calls an MCP client makes (over the bridge's `POST /api/tools/<name>`), and the app shows exactly what they do. Re-record with `npm run dist && npm run demo` (needs Playwright and ffmpeg).</sub>
+
 ## 🚀 Run it (pick one)
 
 1. **Just the app.** Download `axsquiggle.html` and double-click it. One file, works offline, nothing to install. Also hostable anywhere as a

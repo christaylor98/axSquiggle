@@ -14,7 +14,8 @@
     "bridge": "tsx server/main.ts bridge",
     "mcp": "tsx server/main.ts mcp",
     "dist": "npm run build && node scripts/build-single.mjs && node scripts/build-bridge.mjs",
-    "start": "tsx server/main.ts bridge --open"
+    "start": "tsx server/main.ts bridge --open",
+    "demo": "node scripts/demo/record.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
