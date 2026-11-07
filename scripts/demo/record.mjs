@@ -3,6 +3,7 @@
 //   npm run dist                      # builds dist/axsquiggle.html and dist/axsquiggle.mjs
 //   node scripts/demo/record.mjs      # needs Playwright (npm i -D playwright, or any global install) and ffmpeg
 //
+// Voice-over: GEMINI_API_KEY=... (see voice.mjs; NO_VO=1 records silent). The words are in NARRATION below.
 // Output goes to docs/video/ (the mp4) and docs/img/ (the GIFs). The AI side is scripted: it makes the same tool
 // calls over the bridge's REST endpoint (POST /api/tools/<name>) that an MCP client makes, with the same arguments
 // shape, so everything the app shows is what a real AI would cause. Nothing on screen is mocked up.
@@ -12,19 +13,40 @@ import { mkdtempSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, 
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { makeVoice, mixArgs } from './voice.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const here = join(root, 'scripts/demo');
 const require = createRequire(import.meta.url);
 const { chromium } = (() => { try { return require('playwright'); } catch { return createRequire(join(process.env.NODE_PATH?.split(':')[0] ?? '/usr/lib/node_modules', 'x.js'))('playwright'); } })();
 
-const PORT = 4747; // the real default, so the video matches what people see
+const PORT = Number(process.env.DEMO_PORT ?? 4747); // 4747 is the real default (and what the terminal shows); DEMO_PORT if yours is busy
 const BRIDGE = `http://127.0.0.1:${PORT}`;
 const W = 1280, H = 720;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const work = mkdtempSync(join(tmpdir(), 'axsq-demo-'));
 const dataDir = join(work, 'data');
 mkdirSync(dataDir);
+
+// ---------- the voice-over: one line per step, said while it happens ----------
+const NARRATION = {
+  intro: "Here's axSquiggle, from downloading it, to your AI building a screen with you.",
+  s1: "First, download axsquiggle dot M J S from the Releases page. All you need is Node eighteen or newer.",
+  s2: "Run it with node, and the app opens in your browser, already connected.",
+  s3: "Then add it to your AI client as an MCP server. It's just one line.",
+  check: "When the MCP button is green, the app and your AI are connected.",
+  s4: "Now drop in a screenshot of a screen you already have.",
+  s5: "And ask your AI to rebuild it in axSquiggle.",
+  s5b: "It looks at the screenshot, works out what's on the page, and builds the wireframe.",
+  s6: "Make a few changes yourself. Here, I'm adding a phone field in the outline.",
+  s7: "Switch to Review, tap whatever bothers you, and write a note.",
+  s8: "Then tell your AI you've left notes. It reads them, and acts on them.",
+  s8b: "It renames the button, marks Phone as optional, and resolves your note, all as one undoable edit.",
+  done: "That's it. Grab axsquiggle dot HTML, or axsquiggle dot M J S, from the README, and give it a try.",
+};
+let t0 = Date.now(); // reset when the page opens: that is when the video starts
+const voice = await makeVoice({ root, lines: NARRATION, now: () => (Date.now() - t0) / 1000, sleep, off: !!process.env.NO_VO });
+const vo = voice.say;
 
 // ---------- the bridge ----------
 // the download itself: axsquiggle.mjs run with Node ("bridge" given explicitly because there is no terminal here)
@@ -42,7 +64,6 @@ process.on('exit', () => bridge.kill());
 // ---------- the browser ----------
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: W, height: H }, recordVideo: { dir: work, size: { width: W, height: H } } });
-const t0 = Date.now();
 const marks = {};
 const mark = (k, edge) => { (marks[k] ??= {})[edge] = (Date.now() - t0) / 1000; };
 
@@ -91,6 +112,7 @@ await ctx.addInitScript(() => {
 });
 
 const page = await ctx.newPage();
+t0 = Date.now();
 const dm = (fn, ...a) => page.evaluate(([f, args]) => window.dm[f](...args), [fn, a]);
 let mx = 640, my = 360;
 const move = async (x, y, steps = 28) => {
@@ -122,23 +144,27 @@ const aiCall = async (name, args, summary, label) => {
 await page.goto(`${BRIDGE}/`); // what the printed address opens: the app, already connected
 await page.waitForSelector('#bAi');
 await dm('title', 'axSquiggle', 'Download one file. Sketch it. Your AI builds it.', 'node axsquiggle.mjs');
-await sleep(2600);
+await vo('intro'); await sleep(2600); await voice.done();
 await dm('untitle'); await sleep(600);
 
 // ---------- scene 1: download, run, connect the AI client ----------
 mark('connect', 'in');
+await vo('s1');
 await dm('cap', 'Step 1', 'Download axsquiggle.mjs from the Releases page (needs Node 18+)');
 await sleep(1800);
+await vo('s2');
 await dm('cap', 'Step 2', 'Run it: the app opens in your browser, already connected');
 await termType('', 'node axsquiggle.mjs',
   `<span class="d">[axsquiggle]</span> bridge running on <span class="o">http://127.0.0.1:4747</span>\n<span class="d">[axsquiggle]</span> OPEN THE APP: http://127.0.0.1:4747/   (already connected, nothing to type)\n<span class="d">[axsquiggle]</span> Leave this window open.`);
 await sleep(2600);
+await vo('s3');
 await dm('cap', 'Step 3', 'Add it to your AI client as an MCP server (one line)');
 await termType('', 'claude mcp add axsquiggle -- node ~/Downloads/axsquiggle.mjs mcp', `<span class="d">Added stdio MCP server axsquiggle to local config</span>\n<span class="d">If the app is open the AI joins it: you and the AI share one board.</span>`);
 await sleep(3000);
 await dm('term', null);
 await sleep(300);
 if (await page.locator('button:has-text("Start fresh")').isVisible().catch(() => false)) { await clickSel('button:has-text("Start fresh")'); await sleep(500); }
+await vo('check');
 await dm('cap', 'Check', 'The MCP button is green: the app and your AI are connected');
 await clickSel('#bAi');
 await page.waitForSelector('#dBridge[open]');
@@ -148,10 +174,12 @@ mark('connect', 'out');
 
 // ---------- scene 2: screenshot in, AI replicates ----------
 mark('replicate', 'in');
+await vo('s4');
 await dm('cap', 'Step 4', 'Drop in a screenshot of a screen you already have');
 await clickSel('#bShot');
 await page.setInputFiles('#fileIn', join(here, 'source-screen.png'));
 await sleep(2400);
+await vo('s5');
 await dm('cap', 'Step 5', 'Ask your AI to replicate it in axSquiggle');
 await dm('chat', true);
 await dm('say', `<div class="u">Replicate the screenshot on frame 1 as a wireframe.</div>`);
@@ -176,6 +204,7 @@ columns 1:3
     checkbox Email me about payments
     checkbox Weekly summary
     button Save changes | button Cancel`;
+await vo('s5b');
 await aiCall('edit_frame', { frame: 1, caption: 'Profile settings', outline, mode: 'replace' }, 'Updated.', 'frame:1 mode:replace');
 await sleep(2200);
 await dm('chat', false);
@@ -185,12 +214,14 @@ mark('replicate', 'out');
 
 // ---------- scene 3: the person edits and leaves a note ----------
 mark('review', 'in');
+await vo('s6');
 await dm('cap', 'Step 6', 'Make a few changes yourself: add a field in the outline');
 const addBox = page.locator('textarea[aria-label="Add elements"]');
 await clickSel('textarea[aria-label="Add elements"]');
 await typeSlow('input Phone "+1 555 0100"', 45);
 await page.keyboard.press('Enter');
 await sleep(1500);
+await vo('s7');
 await dm('cap', 'Step 7', 'Switch to Review, tap what bothers you, write the note');
 await clickAt(1100, 300); // leave the outline box
 await clickSel('button:has-text("Review")'); await sleep(900);
@@ -211,6 +242,7 @@ await sleep(1800);
 mark('review', 'mid');
 
 // ---------- scene 4: send it back ----------
+await vo('s8');
 await dm('cap', 'Step 8', 'Tell your AI you left notes. It reads them and acts');
 await dm('chat', true);
 await dm('say', `<div class="u">I've left a note on the board. Please action it.</div>`);
@@ -219,6 +251,7 @@ const rev = await aiCall('get_review', {}, (r) => `${/Open review notes: (\d+)/.
 await sleep(1200);
 await dm('say', `<div class="a">Got it: rename the button and mark Phone optional.</div>`);
 await sleep(1300);
+await vo('s8b');
 await aiCall('edit_element', { frame: 1, label: 'Save changes', set_label: 'Update profile' }, 'Updated Button "Update profile"', 'frame:1 label:"Save changes"');
 await sleep(1500);
 await aiCall('edit_element', { frame: 1, label: 'Phone', set_label: 'Phone (optional)' }, 'Updated Input "Phone (optional)"', 'frame:1 label:"Phone"');
@@ -230,8 +263,9 @@ await dm('say', `<div class="a">Done. Your note is resolved, and the changes arr
 await sleep(3200);
 await dm('chat', false);
 mark('review', 'out');
+await vo('done');
 await dm('cap', 'Done', 'Download axsquiggle.html or axsquiggle.mjs from the README and try it');
-await sleep(2800);
+await sleep(2800); await voice.done(); await sleep(800);
 
 // ---------- encode ----------
 await ctx.close();
@@ -239,7 +273,8 @@ const webm = join(work, readdirSync(work).find((f) => f.endsWith('.webm')));
 const outDir = join(root, 'docs/video'); mkdirSync(outDir, { recursive: true });
 const img = join(root, 'docs/img');
 const ff = (args) => execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...args], { stdio: 'inherit' });
-ff(['-i', webm, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '24', '-preset', 'slow', '-movflags', '+faststart', '-an', join(outDir, 'axsquiggle-in-5-minutes.mp4')]);
+const mix = mixArgs(webm, voice.clips);
+ff([...mix.inputs, ...mix.out, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '24', '-preset', 'slow', '-movflags', '+faststart', join(outDir, 'axsquiggle-in-5-minutes.mp4')]);
 const gif = (name, a, b, width = 760, fps = 10) => {
   const pal = join(work, `${name}.png`);
   const common = ['-ss', String(a), '-t', String(b - a), '-i', webm];
