@@ -1,5 +1,5 @@
 name: Pages
-# A hosted copy of the app (one static file) for people whose machines will not open local files.
+# The site lives at squiggle.axstack.dev (repo axSquiggle-site). GitHub Pages only redirects there.
 on:
   push: { branches: [main] }
   workflow_dispatch:
@@ -11,11 +11,12 @@ jobs:
     environment: { name: github-pages, url: "${{ steps.deploy.outputs.page_url }}" }
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
-      - run: npm ci
-      - run: npm run site
+      - name: Redirect to squiggle.axstack.dev
+        run: |
+          mkdir -p _redirect
+          page='<!doctype html><meta charset="utf-8"><title>axSquiggle</title><link rel="canonical" href="https://squiggle.axstack.dev/"><meta http-equiv="refresh" content="0; url=https://squiggle.axstack.dev/"><script>location.replace("https://squiggle.axstack.dev/"+location.pathname.replace(/^\/axSquiggle\/?/,"").replace(/\.html$/,"")+location.hash)</script><a href="https://squiggle.axstack.dev/">squiggle.axstack.dev</a>'
+          for f in index.html 404.html app.html how-to.html; do printf '%s\n' "$page" > "_redirect/$f"; done
       - uses: actions/upload-pages-artifact@v3
-        with: { path: _site }
+        with: { path: _redirect }
       - id: deploy
         uses: actions/deploy-pages@v4
