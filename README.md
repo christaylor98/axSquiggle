@@ -6,6 +6,8 @@
   rough input becomes clean, labelled wireframe parts that size and align themselves.
 </p>
 
+<p align="center"><b><a href="https://squiggle.axstack.dev">squiggle.axstack.dev</a></b>: watch the walkthrough, download, or <a href="https://squiggle.axstack.dev/app">try it in the browser</a>.</p>
+
 <p align="center">
   <img alt="single file, works offline" src="https://img.shields.io/badge/single%20file-works%20offline-e8590c?style=for-the-badge">
   <img alt="no backend, no accounts" src="https://img.shields.io/badge/no%20backend-no%20accounts-2b2118?style=for-the-badge">
@@ -59,7 +61,7 @@ Everything stays on your machine: the bridge listens on `127.0.0.1` only and the
 ## 🚀 Run it (pick one)
 
 1. **Just the app.** Download `axsquiggle.html` and double-click it. One file, works offline, nothing to install. Also hostable anywhere as a
-   static file (a hosted copy is published to GitHub Pages by `.github/workflows/pages.yml`).
+   static file, or try it without downloading at [squiggle.axstack.dev/app](https://squiggle.axstack.dev/app).
 2. **The app plus AI.** Download `axsquiggle.mjs` and run `node axsquiggle.mjs` (Node 18+, Windows, macOS or Linux, no `npm install`). It
    prints an address such as `http://127.0.0.1:4747/`: open it and the app is already connected. It opens the app in your browser for you; add `--no-open` to stop that.
 3. **From source.** `npm install`, then `npm run dev` (app only), `npm start` (bridge + app), `npm test`, `npm run dist` (builds the two files in `dist/`).
