@@ -17,11 +17,11 @@
 
 <p align="center"><sub>✏️ <b>Sketch or type it.</b> The outline on the right is the same drawing as text.</sub></p>
 
-## ▶️ Up and running in 5 minutes
+## ▶️ Up and running in a minute
 
-<p align="center"><a href="docs/video/axsquiggle-in-5-minutes.mp4"><img src="docs/img/demo-poster.png" alt="Video: download and run it, connect your AI over MCP, replicate a screenshot as a wireframe, edit it, send it back" width="100%"></a></p>
+<p align="center"><a href="https://squiggle.axstack.dev/#video"><img src="docs/img/demo-poster.png" alt="Video: download and run it, connect your AI over MCP, replicate a screenshot as a wireframe, edit it, send it back" width="100%"></a></p>
 
-<p align="center"><sub>🎬 <a href="docs/video/axsquiggle-in-5-minutes.mp4"><b>Watch the 1-minute walkthrough</b></a>: download it, run it, connect your AI, replicate an existing screen, change it, send it back.</sub></p>
+<p align="center"><sub>🎬 <a href="https://squiggle.axstack.dev/#video"><b>Watch the 1-minute walkthrough on squiggle.axstack.dev</b></a>: download it, run it, connect your AI, replicate an existing screen, change it, send it back.</sub></p>
 
 **1. Download and connect.** Download `axsquiggle.mjs` from [Releases](https://github.com/christaylor98/axSquiggle/releases/latest) and run `node axsquiggle.mjs`: the app opens in your browser, already connected. Add it to your AI client with one line.
 
