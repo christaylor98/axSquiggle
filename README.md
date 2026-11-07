@@ -89,7 +89,7 @@ An AI client drafts the board, you review it in the app, and it acts on your not
 
 ## 👀 Preview
 
-Shift+V (or Export → Preview) opens a realistic preview of every screen: buttons, inputs, cards and lists rebuilt as real controls inside a phone or browser, with your links working. Pick the look with the style menu or press S to cycle (Clean, Material, Dark, Bold brand, Minimal). The same page is served by the bridge at `/api/export/preview?style=dark`, and Export → Preview saves it as one offline file.
+The **Preview** button in the top bar (or Shift+V, or Export → Preview) opens a realistic preview of every screen: buttons, inputs, cards and lists rebuilt as real controls inside a phone or browser, with your links working. Pick the look with the style menu or press S to cycle (Clean, Material, Dark, Bold brand, Minimal). The same page is served by the bridge at `/api/export/preview?style=dark`, and Export → Preview saves it as one offline file.
 
 <p align="center"><img src="docs/img/preview-clean.png" alt="The dashboard as a realistic preview in a browser frame" width="100%"></p>
 

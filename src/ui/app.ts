@@ -1083,6 +1083,7 @@ export function startApp() {
   const undo = () => { if (!store.undo()) toast('Nothing to undo'); };
   $('bUndo').onclick = undo;
   $('bExport').onclick = () => openExport($<HTMLDialogElement>('dExport') , st.board, toast);
+  $('bPreview').onclick = openPreview;
   document.querySelectorAll('.dclose').forEach((b) => ((b as HTMLElement).onclick = () => (b.closest('dialog') as HTMLDialogElement).close()));
   $('bFresh').onclick = () => store.startFresh();
 
