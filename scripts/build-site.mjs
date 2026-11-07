@@ -11,6 +11,9 @@ mkdirSync('_site/media', { recursive: true });
 cpSync('dist/axsquiggle.html', '_site/app.html');
 cpSync('dist/how-to.html', '_site/how-to.html');
 cpSync('docs/video/axsquiggle-in-5-minutes.mp4', '_site/media/demo.mp4');
+cpSync('docs/video/axsquiggle-modes.mp4', '_site/media/modes.mp4');
+cpSync('docs/video/axsquiggle-modes.chapters.json', '_site/media/modes.chapters.json');
+cpSync('docs/img/modes-poster.png', '_site/media/modes-poster.png');
 for (const f of ['demo-poster.png', 'demo-connect.gif', 'demo-replicate.gif', 'demo-review.gif']) cpSync(`docs/img/${f}`, `_site/media/${f}`);
 cpSync('docs/img/banner.svg', '_site/media/banner.svg');
 // the app opened from the site works offline; the AI bridge download is linked from the repo

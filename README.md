@@ -25,6 +25,8 @@
 
 <p align="center"><sub>🎬 <a href="https://squiggle.axstack.dev/#video"><b>Watch the 1-minute walkthrough on squiggle.axstack.dev</b></a>: download it, run it, connect your AI, replicate an existing screen, change it, send it back.</sub></p>
 
+<p align="center"><sub>🧭 <a href="https://squiggle.axstack.dev/#modes"><b>Get the most out of it (4 minutes, 14 chapters)</b></a>: every mode, from drawing and stamps to click-through, review with your AI, preview and export.</sub></p>
+
 **1. Download and connect.** Download `axsquiggle.mjs` from [Releases](https://github.com/christaylor98/axSquiggle/releases/latest) and run `node axsquiggle.mjs`: the app opens in your browser, already connected. Add it to your AI client with one line.
 
 <p align="center"><img src="docs/img/demo-connect.gif" alt="Animated: node axsquiggle.mjs, the app opening already connected, claude mcp add, and the MCP button green" width="100%"></p>
