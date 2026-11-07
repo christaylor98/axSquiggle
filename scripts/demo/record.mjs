@@ -250,7 +250,7 @@ const gif = (name, a, b, width = 760, fps = 10) => {
 gif('demo-connect', marks.connect.in, marks.connect.out);
 gif('demo-replicate', marks.replicate.in, marks.replicate.out);
 gif('demo-review', marks.review.in, marks.review.out);
-ff(['-ss', '3.2', '-i', webm, '-frames:v', '1', join(img, 'demo-poster.png')]);
+ff(['-ss', String(marks.replicate.out - 1), '-i', webm, '-frames:v', '1', join(img, 'demo-poster.png')]);
 console.log(JSON.stringify(marks));
 bridge.kill(); await browser.close();
 rmSync(work, { recursive: true, force: true });
