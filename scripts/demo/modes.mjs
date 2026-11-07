@@ -4,6 +4,7 @@
 //   node scripts/demo/modes.mjs           # needs Playwright (with its chromium + ffmpeg) and ffmpeg
 //   SCENES=draw,flow node scripts/demo/modes.mjs --shots   # just those chapters, a screenshot after each, no video
 //
+// Voice-over: GEMINI_API_KEY=... (see voice.mjs; NO_VO=1 records silent). The words are in NARRATION below.
 // Output: docs/video/axsquiggle-modes.mp4 (with chapter markers) and docs/video/axsquiggle-modes.chapters.json.
 // The AI part is scripted the same way as record.mjs: real tool calls over the bridge's POST /api/tools/<name>.
 import { spawn, execFileSync } from 'node:child_process';
@@ -12,6 +13,7 @@ import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { makeVoice, mixArgs } from './voice.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const here = join(root, 'scripts/demo');
@@ -28,6 +30,69 @@ const work = mkdtempSync(join(tmpdir(), 'axsq-modes-'));
 const dataDir = join(work, 'data');
 mkdirSync(dataDir);
 
+// ---------- the voice-over: one line per caption, said while it happens ----------
+const NARRATION = {
+  intro: "Hi! This is a tour of everything axSquiggle can do. Every mode gets its own chapter, so feel free to skip straight to the one you need.",
+  draw: "Let's start with Draw, the mode you're in by default. Draw roughly, and each stroke is cleaned up the moment you let go.",
+  'draw.box': "A rough box becomes a nice clean box.",
+  'draw.avatar': "A small circle near the top turns into an avatar.",
+  'draw.input': "A wide, short box is an input field.",
+  'draw.button': "And a small box becomes a button, as soon as it has a word in it.",
+  'draw.para': "Scribble back and forth, and you get a paragraph.",
+  'draw.image': "A line from corner to corner across a box makes it an image placeholder.",
+  'draw.arrow': "Finish a line with a little hook, and it's an arrow, that sticks to whatever it touches.",
+  'draw.delete': "Changed your mind? Just scribble over a shape to delete it.",
+  'draw.rough': "And if you press Escape right after a stroke, it stays rough, exactly as you drew it.",
+  flow: "Flow mode, on F, lets you draw and type without switching tools.",
+  'flow.button': "Tap inside a box and type, and now it's a button.",
+  'flow.label': "Tap just above a field and type, and that's its label.",
+  'flow.keep': "Keep drawing in the same tool, then tap and type again.",
+  sketch: "Sketch mode, on S, keeps your strokes exactly as you drew them. It's great for notes, doodles and rough ideas.",
+  'sketch.raw': "Nothing gets cleaned up here.",
+  'sketch.arrow': "A hook at the end still gives you an arrow, just a hand-drawn one.",
+  text: "Text mode, on T, is for headings, notes and labels, right where you want them.",
+  'text.tap': "Just tap anywhere, and start typing.",
+  'text.updown': "Tap a box, and the up and down arrows move its label: above, top, middle, bottom, or under.",
+  'text.lr': "Left and right line it up left, centre or right.",
+  stamps: "Stamps are ready-made parts. Type a slash and a name, and it drops right in.",
+  'stamps.tabs': "Tap a spot, and type slash tabs, then the labels.",
+  'stamps.radio': "Radio buttons work the same way, with the question first.",
+  'stamps.more': "There are dropdowns, buttons, search fields, and plenty more.",
+  outline: "Outline lets you type a whole screen, one line per element. It's the same screen, just written as text.",
+  'outline.lines': "Every line is one element, and indenting a line puts it inside a card.",
+  'outline.rename': "Rename anything in the outline, and the screen follows along.",
+  select: "Select mode, on V, is for moving, resizing and tidying up. Everything snaps to a twenty pixel grid.",
+  'select.drag': "Drag something to move it, and it snaps into place.",
+  'select.nudge': "The arrow keys nudge it a step at a time.",
+  'select.grid': "G turns the grid and snapping off, and back on again.",
+  'select.roles': "And O shows you what each element actually is.",
+  erase: "Erase, on E, rubs things out.",
+  'erase.drag': "Drag over anything to remove it. One drag is one undo.",
+  'erase.undo': "Escape undoes, and Shift Escape redoes.",
+  frames: "Each frame is a screen. Link them together, and you can click through them like a real app.",
+  'frames.strip': "The strip along the bottom is your storyboard. The number keys, one to nine, jump straight to a frame.",
+  'frames.link': "Select a button, press Space, then L, and pick the frame it should open.",
+  'frames.play': "Press I to play it. Click the link, and you're on that screen.",
+  'frames.phone': "And M switches a frame between desktop and phone.",
+  image: "Got something that already exists? Start from a screenshot, with P.",
+  'image.drop': "Drop, paste or pick a screenshot. It goes on a new frame, behind the canvas.",
+  'image.draw': "Then draw over it. The screenshot stays faint, so your wireframe stays clean.",
+  'image.hide': "Hide the screenshot when you're done, or let your AI rebuild the screen for you.",
+  find: "Control F searches every frame: captions, labels and notes.",
+  review: "Review mode, on R, is for leaving notes right on the screen. Your AI reads them, makes the change, and replies.",
+  'review.note': "Tap the thing you mean, write your note, and hit Add note.",
+  'review.ask': "Then just ask your AI to deal with it.",
+  'review.done': "It reads the note, makes Team the most popular plan, and replies right there on your note.",
+  preview: "Preview shows your sketch as a real interface, and Export takes it anywhere.",
+  'preview.open': "Shift V draws every frame as a real UI.",
+  'preview.style': "Press S to switch the style: clean, material, dark, brand, and minimal.",
+  'preview.export': "W opens Export: PNG, SVG, Markdown for the spec, a clickable prototype, Figma, Excalidraw, and more.",
+  keys: "Last one, and it's the only key you really need to remember. Press Space to see every shortcut, stamp and part, and search them.",
+  outro: "That's axSquiggle. Sketch it, and your AI builds it. Get it at squiggle dot axstack dot dev.",
+};
+const voice = await makeVoice({ root, lines: NARRATION, now: () => (Date.now() - t0) / 1000, sleep, off: SHOTS || !!process.env.NO_VO });
+const vo = voice.say;
+
 // ---------- the bridge ----------
 const bridge = spawn(process.execPath, [join(root, 'dist/axsquiggle.mjs'), 'bridge', '--no-open'], { env: { ...process.env, AXSQ_DIR: dataDir, AXSQ_PORT: String(PORT) }, stdio: 'ignore' });
 process.on('exit', () => bridge.kill());
@@ -43,7 +108,7 @@ const ai = async (name, args = {}) => {
 // ---------- the browser, with the recorder's overlay (captions, cursor, chapter cards, chat) ----------
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: W, height: H }, ...(SHOTS ? {} : { recordVideo: { dir: work, size: { width: W, height: H } } }) });
-const t0 = Date.now();
+let t0 = Date.now(); // reset when the page opens: that is when the video starts
 const chapters = [];
 
 await ctx.addInitScript(() => {
@@ -101,6 +166,7 @@ await ctx.addInitScript(() => {
 });
 
 const page = await ctx.newPage();
+t0 = Date.now();
 const dm = (fn, ...a) => page.evaluate(([f, args]) => window.dm[f](...args), [fn, a]);
 
 // ---------- pointer, keys and frame coordinates ----------
@@ -159,8 +225,9 @@ const write = async (x, y, text) => { await tapAt(x, y); await page.waitForSelec
 
 // ---------- scenes ----------
 const chapter = async (id, n, title, sub) => {
+  await voice.done();
   chapters.push({ id, title, start: (Date.now() - t0) / 1000 });
-  await dm('cap', ''); await dm('title', n, title, sub); await sleep(2600); await dm('untitle'); await sleep(500);
+  await dm('cap', ''); await dm('title', n, title, sub); await vo(id); await sleep(2600); await voice.done(); await dm('untitle'); await sleep(500);
 };
 const shot = async (id) => { if (SHOTS) await page.screenshot({ path: join(process.env.SHOT_DIR ?? work, `${id}.png`) }); };
 const newFrame = async () => { await blur(); await clickSel('#bAdd'); await sleep(500); await fit(); };
@@ -169,32 +236,41 @@ const scenes = {
   async draw() {
     await chapter('draw', 'Chapter 1', 'Draw', 'Draw roughly. Each stroke is cleaned up the moment you let go.');
     await fit();
+    await vo('draw.box');
     await dm('cap', 'Draw', 'A rough box becomes a clean box');
     await stroke(roughBox(60, 120, 260, 320));
     await sleep(900);
+    await vo('draw.avatar');
     await dm('cap', 'Draw', 'A small circle near the top becomes an avatar');
     await stroke(roughCircle(480, 60, 30));
     await sleep(700);
+    await vo('draw.input');
     await dm('cap', 'Draw', 'A wide, short box is an input field');
     await stroke(roughBox(360, 160, 300, 44));
+    await vo('draw.button');
     await dm('cap', 'Draw', 'A small box is a button once it has a word in it');
     await stroke(roughBox(440, 260, 140, 44));
     await sleep(500);
+    await vo('draw.para');
     await dm('cap', 'Draw', 'Scribble back and forth: a paragraph');
     await stroke(scribble(380, 340, 260), { pace: 14 });
     await sleep(700);
+    await vo('draw.image');
     await dm('cap', 'Draw', 'A line corner to corner across a box: an image placeholder');
     await stroke(seg([70, 130], [310, 430], 18, 2));
     await sleep(900);
+    await vo('draw.arrow');
     await dm('cap', 'Draw', 'Finish any line with a little hook: an arrow that sticks to what it touches');
     await stroke(roughBox(720, 120, 200, 240));
     await stroke([...seg([590, 282], [700, 278], 12, 4), [690, 268], [684, 262]]);
     await sleep(1000);
+    await vo('draw.delete');
     await dm('cap', 'Draw', 'Changed your mind? Scribble over a shape to delete it');
     await stroke(seg([400, 500], [600, 520], 10, 2));
     await sleep(500);
     await stroke(scribble(390, 490, 220, 6, 7), { pace: 12 });
     await sleep(900);
+    await vo('draw.rough');
     await dm('cap', 'Draw', '`Esc` right after a stroke keeps it rough');
     await stroke([[740, 500], [770, 470], [800, 520], [830, 470], [860, 515], [880, 480]]);
     await sleep(500);
@@ -206,11 +282,14 @@ const scenes = {
   async flow() {
     await chapter('flow', 'Chapter 2', 'Flow', 'Draw and type without switching tools. `F`');
     await tool('flow', 'f');
+    await vo('flow.button');
     await dm('cap', 'Flow', 'Tap inside a box and type: it becomes a button');
     await write(470, 272, 'Sign in');
+    await vo('flow.label');
     await dm('cap', 'Flow', 'Tap above a field and type: that is its label');
     await write(362, 128, 'Email');
     await write(748, 160, 'Welcome back');
+    await vo('flow.keep');
     await dm('cap', 'Flow', 'Keep drawing in the same tool, then tap and type again');
     await stroke(roughBox(740, 300, 160, 40));
     await write(760, 314, 'Create account');
@@ -221,9 +300,11 @@ const scenes = {
   async sketch() {
     await chapter('sketch', 'Chapter 3', 'Sketch', 'Keep strokes exactly as drawn: notes, doodles, rough ideas. `S`');
     await tool('sketch', 's');
+    await vo('sketch.raw');
     await dm('cap', 'Sketch', 'Nothing is cleaned up in Sketch mode');
     await stroke([[110, 520], [125, 480], [140, 520], [100, 495], [150, 495], [110, 520]], { pace: 22 });
     await stroke(seg([170, 510], [300, 500], 10, 6), { pace: 16 });
+    await vo('sketch.arrow');
     await dm('cap', 'Sketch', 'A hook at the end still gives you an arrow, hand-drawn');
     await stroke([...seg([310, 520], [440, 470], 12, 8), [428, 466], [424, 476]], { pace: 16 });
     await sleep(1000);
@@ -234,12 +315,15 @@ const scenes = {
   async text() {
     await chapter('text', 'Chapter 4', 'Text', 'Headings, notes and labels exactly where you want them. `T`');
     await tool('text', 't');
+    await vo('text.tap');
     await dm('cap', 'Text', 'Tap anywhere and type');
     await write(60, 40, 'Welcome to Acme');
+    await vo('text.updown');
     await dm('cap', 'Text', 'Tap a box, then `↑` `↓` move its label: above, top, middle, bottom, under');
     const [cx, cy] = await where(1, 'Welcome back');
     await clickAt(cx, cy + 60);
     await key('ArrowUp', '↑');
+    await vo('text.lr');
     await dm('cap', 'Text', '`←` `→` set it left, centre or right');
     await key('ArrowRight', '→');
     await sleep(800);
@@ -251,10 +335,13 @@ const scenes = {
     await chapter('stamps', 'Chapter 5', 'Stamps', 'Type a slash and a name to drop in a ready-made part. `/`');
     await newFrame();
     await tool('flow', 'f');
+    await vo('stamps.tabs');
     await dm('cap', 'Stamps', 'Tap a spot and type `/tabs`, then the labels');
     await write(60, 50, '/tabs Day, Week, Month');
+    await vo('stamps.radio');
     await dm('cap', 'Stamps', 'Radio buttons, with the question first');
     await write(60, 140, '/radio Contact by: Email, SMS, Phone');
+    await vo('stamps.more');
     await dm('cap', 'Stamps', 'Dropdowns, buttons, search fields...');
     await write(60, 330, '/dropdown Country "Pick one"');
     await write(60, 430, '/btn Save, Cancel');
@@ -266,11 +353,13 @@ const scenes = {
   async outline() {
     await chapter('outline', 'Chapter 6', 'Outline', 'Type a whole screen, one line per element. It is the same screen as text.');
     await newFrame();
+    await vo('outline.lines');
     await dm('cap', 'Outline', 'One line = one element; indent to put things inside a card');
     await clickSel('textarea[aria-label="Add elements"]');
     const lines = ['header Acme | text Pricing | text Docs', 'columns 1:1', '  card Starter', '    text Free for one person', '    button Choose Starter', '  card Team', '    text $12 a person a month', '    button Choose Team'];
     for (const [i, l] of lines.entries()) { await typeSlow(l, 28); if (i < lines.length - 1) await page.keyboard.press('Shift+Enter'); }
     await sleep(500); await page.keyboard.press('Enter'); await sleep(1500);
+    await vo('outline.rename');
     await dm('cap', 'Outline', 'Rename anything in the outline and the screen follows');
     const inputs = page.locator('#pOutline .rows input');
     const idx = await inputs.evaluateAll((els) => els.findIndex((e) => e.value === 'Choose Team'));
@@ -288,15 +377,19 @@ const scenes = {
     await chapter('select', 'Chapter 7', 'Select, Grid and Roles', 'Move, resize and tidy up. Everything snaps to a 20px grid. `V`');
     await calm(); await key('1'); await fit();
     await tool('select', 'v');
+    await vo('select.drag');
     await dm('cap', 'Select', 'Drag to move: it snaps to the grid');
     const [bx, by, hw] = await where(1, 'Sign in');
     const gx = bx - hw + 6; // the box's edge, not the words in it (those move on their own)
     await move(gx, by); await page.mouse.down(); await move(gx - 80, by, 30); await page.mouse.up(); await sleep(700);
+    await vo('select.nudge');
     await dm('cap', 'Select', 'Arrow keys nudge the selection');
     await key('ArrowRight', '→'); await key('ArrowRight', '→');
     await calm();
+    await vo('select.grid');
     await dm('cap', 'Grid', '`G` turns the grid and snapping off and on');
     await button('#tGrid', 'G'); await sleep(900); await button('#tGrid', 'G');
+    await vo('select.roles');
     await dm('cap', 'Roles', '`O` shows or hides what each element is');
     await button('#tRoles', 'O'); await sleep(1100); await button('#tRoles', 'O');
     await page.keyboard.press('Escape'); await sleep(400);
@@ -306,9 +399,11 @@ const scenes = {
   async erase() {
     await chapter('erase', 'Chapter 8', 'Erase', 'Rub things out. `E`');
     await tool('erase', 'e');
+    await vo('erase.drag');
     await dm('cap', 'Erase', 'Drag over anything to remove it. One drag is one undo');
     await stroke(scribble(380, 330, 260, 4, 8), { pace: 14 });
     await sleep(700);
+    await vo('erase.undo');
     await dm('cap', 'Undo', '`Esc` undoes, `Shift`+`Esc` redoes');
     await key('Escape', 'Esc'); await sleep(900);
     await key('Shift+Escape', 'Shift Esc'); await sleep(700);
@@ -318,9 +413,11 @@ const scenes = {
 
   async frames() {
     await chapter('frames', 'Chapter 9', 'Frames and click-through', 'Each frame is a screen. Link them, then click through like a real app.');
+    await vo('frames.strip');
     await dm('cap', 'Frames', 'The strip at the bottom is your storyboard. `1`–`9` jump to a frame');
     await calm(); await key('3'); await sleep(500); await key('1'); await fit();
     await tool('select', 'v');
+    await vo('frames.link');
     await dm('cap', 'Link', 'Select a button, then `Space` `L`, and pick the frame it opens');
     const [bx, by, hw] = await where(1, 'Sign in');
     await clickAt(bx - hw + 6, by);
@@ -329,10 +426,12 @@ const scenes = {
     await page.waitForSelector('#dLink[open]'); await sleep(900);
     await clickSel('#lres button:has(.fr:text-is("3"))'); await sleep(900);
     await calm();
+    await vo('frames.play');
     await dm('cap', 'Play', '`I` plays it: click the link and it goes to that screen');
     await key('i', 'I'); await sleep(900);
     await clickAt(bx, by); await sleep(1600);
     await key('Escape', 'Esc'); await calm();
+    await vo('frames.phone');
     await dm('cap', 'Phone', '`M` switches a frame between desktop and phone');
     await key('m', 'M'); await sleep(1600); await key('m', 'M'); await sleep(600);
     await shot('frames');
@@ -341,16 +440,19 @@ const scenes = {
   async image() {
     await chapter('image', 'Chapter 10', 'Start from a screenshot', 'Wireframe something that already exists. `P`');
     await calm(); await key('3'); await sleep(400);
+    await vo('image.drop');
     await dm('cap', 'Image', 'Drop, paste or pick a screenshot: it goes on a new frame, behind the canvas');
     await clickSel('#bShot');
     await page.setInputFiles('#fileIn', join(here, 'source-screen.png'));
     await sleep(2000); await fit();
     await tool('draw', 'd');
+    await vo('image.draw');
     await dm('cap', 'Image', 'Draw over it: the screenshot stays faint, your wireframe stays clean');
     await stroke(roughBox(40, 110, 220, 440));
     await stroke(roughBox(300, 110, 620, 440));
     await stroke(roughBox(40, 30, 880, 50));
     await sleep(800); await shot('image-drawn');
+    await vo('image.hide');
     await dm('cap', 'Image', 'Hide the screenshot when you are done, or let your AI rebuild it for you');
     await page.locator('#bShotX').click().catch(() => {}); await sleep(1600);
     await shot('image');
@@ -369,12 +471,14 @@ const scenes = {
     await chapter('review', 'Chapter 12', 'Review', 'Leave notes on the screen. Your AI reads them, makes the change and replies. `R`');
     await fit();
     await tool('review', 'r');
+    await vo('review.note');
     await dm('cap', 'Review', 'Tap what you mean, write the note, Add note');
     const [bx, by] = await where(3, 'Start free trial');
     await clickAt(bx, by); await sleep(400);
     await clickSel('#change');
     await typeSlow('Make Team the recommended plan: badge it and say "Most popular".', 34);
     await clickSel('#bNote'); await sleep(1400);
+    await vo('review.ask');
     await dm('chat', true);
     await dm('say', '<div class="u">I left a note on frame 3, please action it.</div>');
     await sleep(1200);
@@ -383,6 +487,7 @@ const scenes = {
     await dm('say', '<div class="t">→ <b>edit_element</b> frame:3 label:"Team"</div>');
     await ai('edit_element', { frame: 3, label: 'Team', role: 'card', set_label: 'Team · Most popular' }); await sleep(1300);
     const notes = JSON.parse((await ai('get_board', { format: 'json' })).text).frames[2].notes;
+    await vo('review.done');
     await dm('say', '<div class="t">→ <b>resolve_notes</b></div>');
     await ai('resolve_notes', { ids: notes.map((n) => n.id), reply: 'Team is now marked "Most popular".' }); await sleep(1200);
     await dm('say', '<div class="a">Done, and I replied on your note.</div>'); await sleep(2200);
@@ -404,14 +509,17 @@ const scenes = {
         return w.querySelector('iframe').contentWindow;
       };
     });
+    await vo('preview.open');
     await dm('cap', 'Preview', 'Every frame drawn as a real interface');
     await button('#bPreview', 'Shift V'); await sleep(2200);
     const fr = page.frameLocator('.dm-win iframe');
+    await vo('preview.style');
     await dm('cap', 'Preview', '`S` switches the style: clean, material, dark, brand, minimal');
     const styles = await fr.locator('#sty option').evaluateAll((os) => os.map((o) => o.value));
     for (const v of [...styles.slice(1), styles[0]]) { await dm('keys', ['S']); await fr.locator('#sty').selectOption(v); await sleep(1500); await dm('keys', null); }
     await shot('preview-win');
     await page.evaluate(() => document.querySelector('.dm-win')?.remove()); await sleep(400);
+    await vo('preview.export');
     await dm('cap', 'Export', 'PNG, SVG, Markdown for the spec, a clickable prototype, Figma, Excalidraw...');
     await button('#bExport', 'W'); await page.waitForSelector('#dExport[open]'); await sleep(900);
     for (const t of ['Markdown', 'Prototype', 'Figma']) { await clickSel(`#dExport .tabs button:has-text("${t}")`); await sleep(1100); }
@@ -424,8 +532,9 @@ const scenes = {
     await key(' ', 'Space'); await page.waitForSelector('#dKeys[open]'); await sleep(1500);
     await clickSel('#palq'); await typeSlow('frame', 90); await sleep(1800);
     await page.evaluate(() => document.getElementById('dKeys').close()); await sleep(400);
+    await voice.done();
     await dm('title', '', 'Sketch it. Your AI builds it.', 'squiggle.axstack.dev · `Space` for every key · `?` for the animated guide');
-    await sleep(3200);
+    await vo('outro'); await sleep(3200); await voice.done(); await sleep(800);
     await shot('keys');
   },
 };
@@ -434,7 +543,7 @@ const scenes = {
 await page.goto(`${BRIDGE}/`);
 await page.waitForSelector('#bAi');
 if (await page.locator('#bFresh').isVisible().catch(() => false)) { await page.click('#bFresh'); await sleep(300); }
-if (!ONLY) { await dm('title', '', 'Get the most out of axSquiggle', 'Every mode, one chapter each, in the real app. Skip to the one you need.'); await sleep(3800); await dm('untitle'); await sleep(500); }
+if (!ONLY) { await dm('title', '', 'Get the most out of axSquiggle', 'Every mode, one chapter each, in the real app. Skip to the one you need.'); await vo('intro'); await sleep(3800); await voice.done(); await dm('untitle'); await sleep(500); }
 for (const [id, run] of Object.entries(scenes)) if (!ONLY || ONLY.includes(id)) await run();
 
 if (SHOTS) { console.log('shots in', process.env.SHOT_DIR ?? work); await browser.close(); bridge.kill(); process.exit(0); }
@@ -447,7 +556,8 @@ const outDir = join(root, 'docs/video'); mkdirSync(outDir, { recursive: true });
 const ff = (args) => execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...args], { stdio: 'inherit' });
 const meta = [';FFMETADATA1', ...chapters.map((c, i) => `[CHAPTER]\nTIMEBASE=1/1000\nSTART=${Math.round(c.start * 1000)}\nEND=${Math.round((chapters[i + 1]?.start ?? total) * 1000)}\ntitle=${c.title}`)].join('\n');
 writeFileSync(join(work, 'chapters.txt'), meta + '\n');
-ff(['-i', webm, '-i', join(work, 'chapters.txt'), '-map_metadata', '1', '-map_chapters', '1', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '26', '-preset', 'slow', '-movflags', '+faststart', '-an', join(outDir, 'axsquiggle-modes.mp4')]);
+const mix = mixArgs(webm, voice.clips), ci = String(mix.next);
+ff([...mix.inputs, '-i', join(work, 'chapters.txt'), ...mix.out, '-map_metadata', ci, '-map_chapters', ci, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '26', '-preset', 'slow', '-movflags', '+faststart', join(outDir, 'axsquiggle-modes.mp4')]);
 writeFileSync(join(outDir, 'axsquiggle-modes.chapters.json'), JSON.stringify(chapters.map(({ id, title, start }) => ({ id, title, start: Math.round(start * 10) / 10 })), null, 2) + '\n');
 const posterAt = chapters.find((c) => c.id === 'preview')?.start ?? 5;
 ff(['-ss', String(posterAt + 6), '-i', webm, '-frames:v', '1', join(root, 'docs/img/modes-poster.png')]);
