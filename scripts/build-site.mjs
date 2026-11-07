@@ -3,8 +3,8 @@
 import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
-// the hosted app offers one-click "Activate MCP" against the hosted bridge (worker/)
-const bridge = process.env.VITE_HOSTED_BRIDGE ?? 'https://squiggle-mcp.axstack.dev';
+// Local-first: the site serves the plain app. Set VITE_HOSTED_BRIDGE=https://... to also offer one-click "Activate MCP" against a deployed worker/.
+const bridge = process.env.VITE_HOSTED_BRIDGE ?? '';
 execSync('npm run dist', { stdio: 'inherit', env: { ...process.env, VITE_HOSTED_BRIDGE: bridge } });
 rmSync('_site', { recursive: true, force: true });
 mkdirSync('_site/media', { recursive: true });
@@ -41,4 +41,4 @@ code{background:#0002;border-radius:6px;padding:2px 7px}
 </main></body></html>`);
 // leave dist/ as the plain app (no hosted button): that is what gets downloaded and run locally
 execSync('npm run dist', { stdio: 'inherit', env: { ...process.env, VITE_HOSTED_BRIDGE: '' } });
-console.log(`_site ready (hosted bridge: ${bridge})`);
+console.log(`_site ready (${bridge ? 'hosted bridge: ' + bridge : 'local-only, no hosted bridge'})`);

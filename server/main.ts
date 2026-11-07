@@ -64,7 +64,8 @@ const remoteHub = (): Hub => ({
 // Run by a person in a terminal: just the bridge + app. Spawned by an AI client (stdin is a pipe): speak MCP.
 const arg = process.argv.slice(2).find((a) => !a.startsWith('-'));
 const mode = arg ?? (process.stdin.isTTY ? 'bridge' : 'mcp');
-const wantsOpen = process.argv.includes('--open');
+// a person at a terminal gets the browser opened for them; --no-open turns that off
+const wantsOpen = process.argv.includes('--open') || (process.stdin.isTTY && !process.argv.includes('--no-open'));
 const state = await startBridge();
 if (mode === 'bridge') {
   if (!state) { log(`port ${port} is already in use: a bridge is probably running, open http://127.0.0.1:${port}/`); process.exit(1); }

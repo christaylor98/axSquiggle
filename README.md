@@ -19,13 +19,13 @@
 
 ## ▶️ Up and running in 5 minutes
 
-<p align="center"><a href="docs/video/axsquiggle-in-5-minutes.mp4"><img src="docs/img/demo-poster.png" alt="Video: run the bridge, connect your AI over MCP, replicate a screenshot as a wireframe, edit it, send it back" width="100%"></a></p>
+<p align="center"><a href="docs/video/axsquiggle-in-5-minutes.mp4"><img src="docs/img/demo-poster.png" alt="Video: download and run it, connect your AI over MCP, replicate a screenshot as a wireframe, edit it, send it back" width="100%"></a></p>
 
-<p align="center"><sub>🎬 <a href="docs/video/axsquiggle-in-5-minutes.mp4"><b>Watch the 65-second walkthrough</b></a>: run it, connect your AI, replicate an existing screen, change it, send it back.</sub></p>
+<p align="center"><sub>🎬 <a href="docs/video/axsquiggle-in-5-minutes.mp4"><b>Watch the 1-minute walkthrough</b></a>: download it, run it, connect your AI, replicate an existing screen, change it, send it back.</sub></p>
 
-**1. Connect.** Run the bridge, add it to your AI client, press **MCP** in the app and paste the address and token.
+**1. Download and connect.** Download `axsquiggle.mjs` from [Releases](https://github.com/christaylor98/axSquiggle/releases/latest) and run `node axsquiggle.mjs`: the app opens in your browser, already connected. Add it to your AI client with one line.
 
-<p align="center"><img src="docs/img/demo-connect.gif" alt="Animated: node axsquiggle.mjs, claude mcp add, then the MCP dialog connecting the app" width="100%"></p>
+<p align="center"><img src="docs/img/demo-connect.gif" alt="Animated: node axsquiggle.mjs, the app opening already connected, claude mcp add, and the MCP button green" width="100%"></p>
 
 **2. Replicate.** Drop a screenshot of a screen you already have onto a frame and ask your AI to build it. It reads the image through `get_review` and writes the wireframe with `edit_frame`.
 
@@ -37,12 +37,31 @@
 
 <sub>The AI side of these recordings is scripted: it makes the same tool calls an MCP client makes (over the bridge's `POST /api/tools/<name>`), and the app shows exactly what they do. Re-record with `npm run dist && npm run demo` (needs Playwright and ffmpeg).</sub>
 
+## 📦 Download
+
+Everything is on the **[Releases page](https://github.com/christaylor98/axSquiggle/releases/latest)**. Pick what you need:
+
+| File | What it is | Needs |
+|---|---|---|
+| [`axsquiggle.mjs`](https://github.com/christaylor98/axSquiggle/releases/latest/download/axsquiggle.mjs) | The app **plus the AI bridge** (MCP). Run `node axsquiggle.mjs`; the app opens already connected. | [Node 18+](https://nodejs.org) (Windows, macOS, Linux). No `npm install`. |
+| [`axsquiggle.html`](https://github.com/christaylor98/axSquiggle/releases/latest/download/axsquiggle.html) | Just the app, one file, works offline. | Nothing: double-click it. |
+| [`how-to.html`](https://github.com/christaylor98/axSquiggle/releases/latest/download/how-to.html) | The animated how-to guide. | Nothing. |
+| [`SHA256SUMS`](https://github.com/christaylor98/axSquiggle/releases/latest/download/SHA256SUMS) | Checksums, to check a download: `sha256sum -c SHA256SUMS`. | |
+
+Then add it to your AI client (use the real path to the file):
+
+```bash
+claude mcp add axsquiggle -- node /path/to/axsquiggle.mjs mcp
+```
+
+Everything stays on your machine: the bridge listens on `127.0.0.1` only and the boards are files in `~/.axsquiggle/`.
+
 ## 🚀 Run it (pick one)
 
 1. **Just the app.** Download `axsquiggle.html` and double-click it. One file, works offline, nothing to install. Also hostable anywhere as a
    static file (a hosted copy is published to GitHub Pages by `.github/workflows/pages.yml`).
 2. **The app plus AI.** Download `axsquiggle.mjs` and run `node axsquiggle.mjs` (Node 18+, Windows, macOS or Linux, no `npm install`). It
-   prints an address such as `http://127.0.0.1:4747/`: open it and the app is already connected. Add `--open` to open it for you.
+   prints an address such as `http://127.0.0.1:4747/`: open it and the app is already connected. It opens the app in your browser for you; add `--no-open` to stop that.
 3. **From source.** `npm install`, then `npm run dev` (app only), `npm start` (bridge + app), `npm test`, `npm run dist` (builds the two files in `dist/`).
 
 > [!TIP]
@@ -173,6 +192,18 @@ Tools: `get_board`, `draft_board`, `edit_frame`, `edit_element`, `delete_frame`,
 > Security: the bridge binds to 127.0.0.1, every request needs the token (`~/.axsquiggle/token`, or `AXSQ_TOKEN`), and browsers are limited to
 > localhost origins (add others with `AXSQ_ORIGINS`). Settings: `AXSQ_PORT`, `AXSQ_DIR`, `AXSQ_APP`. Writes carry a revision, so a stale
 > edit is refused instead of overwriting.
+
+## 🏷️ Releases
+
+A release is a git tag. Pushing a tag that starts with `v` runs `.github/workflows/release.yml`, which runs the tests, builds the downloads and publishes them (with checksums and generated notes) on the Releases page.
+
+```bash
+npm version 0.2.0 --no-git-tag-version   # optional: keep package.json in step
+git commit -am "Release 0.2.0" && git tag v0.2.0
+git push origin main v0.2.0
+```
+
+Check `dist/` locally first with `npm run dist`. Nothing is built from a branch: only tags publish.
 
 ## 📄 License
 

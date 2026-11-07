@@ -12,6 +12,8 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run dist
-      - name: Publish the two downloads
+      - name: Checksums
+        run: cd dist && sha256sum axsquiggle.html axsquiggle.mjs how-to.html > SHA256SUMS
+      - name: Publish the downloads
         env: { GH_TOKEN: "${{ github.token }}" }
-        run: gh release create "$GITHUB_REF_NAME" dist/axsquiggle.html dist/axsquiggle.mjs dist/how-to.html --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" dist/axsquiggle.html dist/axsquiggle.mjs dist/how-to.html dist/SHA256SUMS --generate-notes

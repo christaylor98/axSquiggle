@@ -18,7 +18,7 @@ const here = join(root, 'scripts/demo');
 const require = createRequire(import.meta.url);
 const { chromium } = (() => { try { return require('playwright'); } catch { return createRequire(join(process.env.NODE_PATH?.split(':')[0] ?? '/usr/lib/node_modules', 'x.js'))('playwright'); } })();
 
-const PORT = 4799;
+const PORT = 4747; // the real default, so the video matches what people see
 const BRIDGE = `http://127.0.0.1:${PORT}`;
 const W = 1280, H = 720;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -27,7 +27,8 @@ const dataDir = join(work, 'data');
 mkdirSync(dataDir);
 
 // ---------- the bridge ----------
-const bridge = spawn(process.execPath, [join(root, 'dist/axsquiggle.mjs')], { env: { ...process.env, AXSQ_DIR: dataDir, AXSQ_PORT: String(PORT) }, stdio: 'ignore' });
+// the download itself: axsquiggle.mjs run with Node ("bridge" given explicitly because there is no terminal here)
+const bridge = spawn(process.execPath, [join(root, 'dist/axsquiggle.mjs'), 'bridge', '--no-open'], { env: { ...process.env, AXSQ_DIR: dataDir, AXSQ_PORT: String(PORT) }, stdio: 'ignore' });
 for (let i = 0; i < 50; i++) { try { await fetch(BRIDGE); break; } catch { await sleep(100); } }
 const token = readFileSync(join(dataDir, 'token'), 'utf8').trim();
 const ai = async (name, args = {}) => {
@@ -118,34 +119,30 @@ const aiCall = async (name, args, summary, label) => {
 };
 
 // ---------- scene 0: title ----------
-await page.goto(pathToFileURL(join(root, 'dist/axsquiggle.html')).href);
+await page.goto(`${BRIDGE}/`); // what the printed address opens: the app, already connected
 await page.waitForSelector('#bAi');
-await dm('title', 'axSquiggle', 'Sketch it. Your AI builds it. Up and running in 5 minutes.', 'node axsquiggle.mjs');
+await dm('title', 'axSquiggle', 'Download one file. Sketch it. Your AI builds it.', 'node axsquiggle.mjs');
 await sleep(2600);
 await dm('untitle'); await sleep(600);
 
-// ---------- scene 1: run it, connect the AI client ----------
+// ---------- scene 1: download, run, connect the AI client ----------
 mark('connect', 'in');
-await dm('cap', 'Step 1', 'Run the bridge: one file, Node 18+, no npm install');
+await dm('cap', 'Step 1', 'Download axsquiggle.mjs from the Releases page (needs Node 18+)');
+await sleep(1800);
+await dm('cap', 'Step 2', 'Run it: the app opens in your browser, already connected');
 await termType('', 'node axsquiggle.mjs',
-  `<span class="d">[axsquiggle]</span> bridge running on <span class="o">http://127.0.0.1:4747</span>\n<span class="d">[axsquiggle]</span> OPEN THE APP: http://127.0.0.1:4747/\n<span class="d">[axsquiggle]</span> token saved in ~/.axsquiggle/token`);
-await sleep(2200);
-await dm('cap', 'Step 2', 'Add it to your AI client as an MCP server');
-await termType('', 'claude mcp add axsquiggle -- node axsquiggle.mjs', `<span class="d">Added stdio MCP server axsquiggle to local config</span>\n<span class="d">Your AI can now call draft_board, get_review, edit_frame, resolve_notes ...</span>`);
+  `<span class="d">[axsquiggle]</span> bridge running on <span class="o">http://127.0.0.1:4747</span>\n<span class="d">[axsquiggle]</span> OPEN THE APP: http://127.0.0.1:4747/   (already connected, nothing to type)\n<span class="d">[axsquiggle]</span> Leave this window open.`);
 await sleep(2600);
+await dm('cap', 'Step 3', 'Add it to your AI client as an MCP server (one line)');
+await termType('', 'claude mcp add axsquiggle -- node ~/Downloads/axsquiggle.mjs mcp', `<span class="d">Added stdio MCP server axsquiggle to local config</span>\n<span class="d">If the app is open the AI joins it: you and the AI share one board.</span>`);
+await sleep(3000);
 await dm('term', null);
 await sleep(300);
-await clickSel('button:has-text("Start fresh")'); await sleep(500);
-await dm('cap', 'Step 3', 'In the app, press MCP, paste the bridge address and token, Connect');
+if (await page.locator('button:has-text("Start fresh")').isVisible().catch(() => false)) { await clickSel('button:has-text("Start fresh")'); await sleep(500); }
+await dm('cap', 'Check', 'The MCP button is green: the app and your AI are connected');
 await clickSel('#bAi');
 await page.waitForSelector('#dBridge[open]');
-await sleep(500);
-await clickSel('#brUrl'); await page.fill('#brUrl', ''); await typeSlow(BRIDGE, 24);
-await clickSel('#brTok'); await page.fill('#brTok', token);
-await sleep(300);
-await clickSel('#brGo');
-await page.waitForFunction(() => /connected/i.test(document.querySelector('#brStatus')?.textContent ?? '') || /connected/i.test(document.querySelector('#bAi')?.className ?? ''), null, { timeout: 8000 }).catch(() => {});
-await sleep(1800);
+await sleep(2600);
 await page.keyboard.press('Escape'); await sleep(500);
 mark('connect', 'out');
 
