@@ -1,6 +1,10 @@
 name: Release
 on:
   push: { tags: ['v*'] }
+  # or run it by hand (Actions, Release, Run workflow) with the version to publish: it creates the tag on the chosen commit
+  workflow_dispatch:
+    inputs:
+      tag: { description: 'Version to publish, e.g. v0.2.0', required: true }
 permissions: { contents: write }
 jobs:
   release:
@@ -15,5 +19,5 @@ jobs:
       - name: Checksums
         run: cd dist && sha256sum axsquiggle.html axsquiggle.mjs how-to.html > SHA256SUMS
       - name: Publish the downloads
-        env: { GH_TOKEN: "${{ github.token }}" }
-        run: gh release create "$GITHUB_REF_NAME" dist/axsquiggle.html dist/axsquiggle.mjs dist/how-to.html dist/SHA256SUMS --generate-notes
+        env: { GH_TOKEN: "${{ github.token }}", TAG: "${{ github.event.inputs.tag || github.ref_name }}" }
+        run: gh release create "$TAG" --target "$GITHUB_SHA" dist/axsquiggle.html dist/axsquiggle.mjs dist/how-to.html dist/SHA256SUMS --generate-notes
