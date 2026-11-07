@@ -17,7 +17,7 @@
 
 <p align="center"><sub>✏️ <b>Sketch or type it.</b> The outline on the right is the same drawing as text.</sub></p>
 
-## ▶️ Up and running in 5 minutes
+## ▶️ Up and running in a minute
 
 <p align="center"><a href="https://squiggle.axstack.dev/#video"><img src="docs/img/demo-poster.png" alt="Video: download and run it, connect your AI over MCP, replicate a screenshot as a wireframe, edit it, send it back" width="100%"></a></p>
 
