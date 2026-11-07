@@ -1,0 +1,72 @@
+[
+  {
+    "id": "draw",
+    "title": "Draw",
+    "start": 5.2
+  },
+  {
+    "id": "flow",
+    "title": "Flow",
+    "start": 34.9
+  },
+  {
+    "id": "sketch",
+    "title": "Sketch",
+    "start": 51.3
+  },
+  {
+    "id": "text",
+    "title": "Text",
+    "start": 61.9
+  },
+  {
+    "id": "stamps",
+    "title": "Stamps",
+    "start": 72.7
+  },
+  {
+    "id": "outline",
+    "title": "Outline",
+    "start": 94
+  },
+  {
+    "id": "select",
+    "title": "Select, Grid and Roles",
+    "start": 109.6
+  },
+  {
+    "id": "erase",
+    "title": "Erase",
+    "start": 126.5
+  },
+  {
+    "id": "frames",
+    "title": "Frames and click-through",
+    "start": 137.5
+  },
+  {
+    "id": "image",
+    "title": "Start from a screenshot",
+    "start": 159.7
+  },
+  {
+    "id": "find",
+    "title": "Find",
+    "start": 176.9
+  },
+  {
+    "id": "review",
+    "title": "Review",
+    "start": 184.3
+  },
+  {
+    "id": "preview",
+    "title": "Preview and Export",
+    "start": 204
+  },
+  {
+    "id": "keys",
+    "title": "Every key, one place",
+    "start": 226.9
+  }
+]
