@@ -32,6 +32,7 @@
       <button id="bShot" title="Add a photo of a sketch or a screenshot behind the frame (or paste / drop one). Then trace it (K), or ask your AI (over MCP) to build it.">Image<kbd>P</kbd></button>
       <button id="bShotX" hidden>Remove screenshot</button>
       <button id="bBoards" title="Boards: switch between the AI's storyboards or start a new one (Shift+B)" hidden></button>
+      <button id="bQuiz" title="Questions: answer every question on this board, one at a time" hidden>Questions</button>
       <button id="bAi" title="MCP bridge: connect this board to an AI that works through MCP">MCP</button>
       <button id="bPreview" title="Preview: every screen made to look real, in a style you pick (Shift+V)">Preview<kbd>⇧V</kbd></button>
       <button id="bExport" class="primary">Export<kbd>W</kbd></button>
@@ -100,6 +101,10 @@
 <dialog id="dLink"><div class="dhead"><b id="linkTitle">Link to frame <small>press its number, or Up/Down and Enter</small></b><button class="dclose" aria-label="Close">×</button></div>
   <div class="body"><div id="lres" class="sres" role="listbox" tabindex="0"></div></div></dialog>
 <div id="playbar" class="playbar" hidden><b>Play</b> click the dashed links · Backspace back · ←/→ frames · Esc exits</div>
+<dialog id="dQuiz" class="quiz"><div class="dhead"><b id="quizTitle"></b><button class="dclose" aria-label="Close">×</button></div>
+  <div class="body"><p class="hint" id="quizWhere"></p><p class="qtext" id="quizQ"></p><div id="quizOpts" class="qopts"></div>
+  <textarea id="quizNote" rows="2" placeholder="Or say it in your own words (optional): it goes on the board as a note"></textarea>
+  <div class="btns"><button type="button" id="quizBack">Back</button><button type="button" class="primary" id="quizNext">Next</button></div></div></dialog>
 <dialog id="dAsk"><form method="dialog"><div class="dhead"><b id="askTitle"></b></div>
   <div class="body"><input id="askIn" autocomplete="off" spellcheck="false"><p class="hint" id="askHint"></p>
   <div class="btns"><button class="primary" value="ok">OK</button><button type="button" id="askNo">Cancel</button></div></div></form></dialog>

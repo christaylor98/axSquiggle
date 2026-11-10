@@ -1,4 +1,4 @@
-import { choiceAt, choose } from '../core/choice';
+import { choiceAt, choose, questionsOf } from '../core/choice';
 import { AttentionMeter, TICK_MS } from '../core/attention';
 import { bbox, bounds, center, linePts, lineLabelSpot, pathLen, pointInPoly, setTextMeasurer, snapTo, textBlock, type Box } from '../core/geom';
 import { ATTACH_NEAR, connect, endsOf, nearestTarget } from '../core/connect';
@@ -1094,6 +1094,43 @@ export function startApp() {
 
   // ---------- AI bridge ----------
   const sync = new Sync(store, toast);
+  // ---------- Questionnaire mode: every question on the board, one at a time ----------
+  let qi = 0;
+  const quiz = $<HTMLDialogElement>('dQuiz');
+  const paintQuizButton = () => {
+    const qs = questionsOf(st.board), b = $('bQuiz');
+    b.hidden = !qs.length; b.textContent = `Questions (${qs.length})`;
+  };
+  const paintQuiz = () => {
+    const qs = questionsOf(st.board);
+    if (!qs.length) { quiz.close(); return; }
+    qi = Math.max(0, Math.min(qi, qs.length - 1));
+    const q = qs[qi];
+    $('quizTitle').textContent = `Question ${qi + 1} of ${qs.length}`;
+    $('quizWhere').textContent = `Frame ${q.fi + 1}${q.caption ? ': ' + q.caption : ''}`;
+    $('quizQ').textContent = q.q;
+    const box = $('quizOpts'); box.replaceChildren();
+    for (const o of q.options) {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = o.opt; if (o.on) b.classList.add('on');
+      b.onclick = () => { store.mutate((_f, bd) => { choose(bd, q.fi, o.idx, 'person'); }); paintQuiz(); };
+      box.append(b);
+    }
+    $<HTMLButtonElement>('quizBack').disabled = qi === 0;
+    $('quizNext').textContent = qi === qs.length - 1 ? 'Done' : 'Next';
+  };
+  const quizNote = () => {
+    const t = $<HTMLTextAreaElement>('quizNote'), text = t.value.trim(); t.value = '';
+    const q = questionsOf(st.board)[qi];
+    if (text && q) store.mutate((_f, bd) => { bd.frames[q.fi].notes.push(newNote(`${q.q} — ${text}`, q.at, [])); });
+  };
+  const openQuiz = (start = 0) => { qi = start; if (!questionsOf(st.board).length) { toast('No questions on this board'); return; } paintQuiz(); quiz.showModal(); };
+  $('bQuiz').onclick = () => openQuiz();
+  $('quizBack').onclick = () => { quizNote(); qi--; paintQuiz(); };
+  $('quizNext').onclick = () => { quizNote(); const n = questionsOf(st.board).length; if (qi >= n - 1) { quiz.close(); toast('Thanks: your answers are on the board'); } else { qi++; paintQuiz(); } };
+  store.subscribe(() => { paintQuizButton(); if (quiz.open) paintQuiz(); });
+  paintQuizButton();
+  if (new URLSearchParams(location.search).has('questions')) setTimeout(() => openQuiz(), 300);
+
   // Attention clock: count only time the board is on screen, focused and touched within a minute; report it to the bridge.
   const meter = new AttentionMeter();
   const touched = () => meter.input(Date.now());

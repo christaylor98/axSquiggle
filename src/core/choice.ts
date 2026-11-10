@@ -56,3 +56,20 @@ export function setChoice(b: Board, fi: number, q: string, opt: string, by: Knob
   if (idx < 0) throw new Error(`"${qs[0].q}" has no option "${opt}". Options: ${qs[0].options.join(' / ')}`);
   return choose(b, fi, idx, by);
 }
+
+/** Every question on the board, in frame order: the questionnaire mode walks these one at a time. */
+export interface Question { fi: number; caption: string; q: string; options: { opt: string; idx: number; on: boolean }[]; at: [number, number, number, number] }
+export function questionsOf(b: Board): Question[] {
+  const out: Question[] = [];
+  b.frames.forEach((f, fi) => {
+    const by = new Map<string, Question>();
+    f.shapes.forEach((s, idx) => {
+      if (!isOpt(s)) return;
+      let q = by.get(s.choice);
+      if (!q) { q = { fi, caption: f.caption, q: s.choice, options: [], at: [s.x, s.y, s.w, s.h] }; by.set(s.choice, q); out.push(q); }
+      q.options.push({ opt: s.opt, idx, on: !!s.on });
+      q.at = [Math.min(q.at[0], s.x), Math.min(q.at[1], s.y), Math.max(q.at[0] + q.at[2], s.x + s.w) - Math.min(q.at[0], s.x), s.h];
+    });
+  });
+  return out;
+}

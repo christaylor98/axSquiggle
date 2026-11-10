@@ -184,3 +184,12 @@ dialog .body p { margin: 0; }
 .copyrow input { flex: 1; min-width: 0; font: 12px ui-monospace, Menlo, Consolas, monospace; }
 .steps { padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
 #brOwn > summary { cursor: pointer; margin: 10px 0 6px; }
+
+/* Questionnaire mode: one question at a time, big answers */
+dialog.quiz { width: min(640px, 96vw); }
+dialog.quiz .qtext { font-size: 20px; font-weight: 600; line-height: 1.3; }
+dialog.quiz .qopts { display: flex; flex-direction: column; gap: 8px; }
+dialog.quiz .qopts button { text-align: left; font-size: 16px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+dialog.quiz .qopts button.on { background: #ffec99; border-color: #f08c00; color: #000; font-weight: 600; }
+dialog.quiz textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg, transparent); color: var(--ink); }
+#bQuiz { background: #ffec99; color: #000; border-color: #f08c00; font-weight: 600; }
