@@ -193,3 +193,5 @@ dialog.quiz .qopts button { text-align: left; font-size: 16px; padding: 12px 14p
 dialog.quiz .qopts button.on { background: #ffec99; border-color: #f08c00; color: #000; font-weight: 600; }
 dialog.quiz textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg, transparent); color: var(--ink); }
 #bQuiz { background: #ffec99; color: #000; border-color: #f08c00; font-weight: 600; }
+dialog.quiz .qpic { max-height: 42vh; overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+dialog.quiz .qpic svg { width: 100%; height: auto; display: block; }

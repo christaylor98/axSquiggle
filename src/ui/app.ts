@@ -1,4 +1,5 @@
 import { choiceAt, choose, questionsOf } from '../core/choice';
+import { frameSVG } from '../core/exporters';
 import { AttentionMeter, TICK_MS } from '../core/attention';
 import { bbox, bounds, center, linePts, lineLabelSpot, pathLen, pointInPoly, setTextMeasurer, snapTo, textBlock, type Box } from '../core/geom';
 import { ATTACH_NEAR, connect, endsOf, nearestTarget } from '../core/connect';
@@ -1108,6 +1109,7 @@ export function startApp() {
     const q = qs[qi];
     $('quizTitle').textContent = `Question ${qi + 1} of ${qs.length}`;
     $('quizWhere').textContent = `Frame ${q.fi + 1}${q.caption ? ': ' + q.caption : ''}`;
+    $('quizPic').innerHTML = frameSVG(st.board.frames[q.fi]);   // the question's frame, so its pictures are in front of the person
     $('quizQ').textContent = q.q;
     const box = $('quizOpts'); box.replaceChildren();
     for (const o of q.options) {
