@@ -103,7 +103,7 @@ export function validateFrame(v: unknown): Frame | null {
   if (!v || typeof v !== 'object') return null;
   const o = v as Record<string, unknown>;
   if (!Array.isArray(o.shapes)) return null;
-  const device: Device = o.device === 'phone' ? 'phone' : 'desktop';
+  const device: Device = o.device === 'phone' ? 'phone' : o.device === 'wide' ? 'wide' : 'desktop';
   const f = newFrame(device, typeof o.caption === 'string' ? o.caption.slice(0, 300) : '');
   f.id = linkOf(o.id) ?? f.id;
   const fh = num(o.h); if (fh !== null && fh > DEVICES[device].h && fh <= 4000) f.h = Math.round(fh);

@@ -25,10 +25,11 @@ export const newId = (prefix = '') => prefix + Math.random().toString(36).slice(
 
 export type BoxShape = Extract<Shape, { w: number }>;
 
-export type Device = 'desktop' | 'phone';
+export type Device = 'desktop' | 'wide' | 'phone';
 
 export const DEVICES: Record<Device, { w: number; h: number }> = {
   desktop: { w: 960, h: 600 },
+  wide: { w: 1600, h: 900 },   // a landscape desktop screen: dashboards, maps, control rooms
   phone: { w: 390, h: 780 },
 };
 

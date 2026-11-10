@@ -8,7 +8,7 @@ import { newId } from '../src/core/types';
 import type { BoardServer } from './state';
 
 const frameRef = z.union([z.number(), z.string()]).describe('A frame: its number (1 = first), its id, or words from its caption');
-const device = z.enum(['desktop', 'phone']);
+const device = z.enum(['desktop', 'wide', 'phone']).describe('desktop 960x600, wide 1600x900 (landscape dashboards, maps), phone 390x780');
 const rev = z.number().int().optional().describe('The board revision you last read; the edit is refused if the person changed the board since');
 
 /** What a tool returns: text, and optionally images the AI should look at (sketch photos, screenshots). */
@@ -114,7 +114,7 @@ const BASE: Tool[] = [
     },
     run: async (s, a) => {
       let warn: string[] = [];
-      s.aiWrite((b) => { warn = applyOutline(b, a.frame as FrameRef, a.outline as string | undefined, (a.mode as 'append' | 'replace') ?? 'append', { caption: a.caption as string | undefined, device: a.device as 'desktop' | 'phone' | undefined }); }, a.expected_rev as number | undefined);
+      s.aiWrite((b) => { warn = applyOutline(b, a.frame as FrameRef, a.outline as string | undefined, (a.mode as 'append' | 'replace') ?? 'append', { caption: a.caption as string | undefined, device: a.device as 'desktop' | 'wide' | 'phone' | undefined }); }, a.expected_rev as number | undefined);
       return tell(s, `Updated.${warn.length ? ' Warnings: ' + warn.join('; ') : ''}\n\n${describeFrame(s.board, frameNo(s, a.frame as FrameRef))}`);
     },
   },

@@ -1354,7 +1354,7 @@ export function startApp() {
       { key: 'i', label: 'Play: click through the links', run: () => setPlay(!play) },
       { key: '[', label: 'Previous frame', run: () => store.setCur(st.cur - 1) },
       { key: ']', label: 'Next frame', run: () => store.setCur(st.cur + 1) },
-      { key: 'm', label: 'Toggle desktop / phone', run: () => store.mutate((f) => { f.device = f.device === 'phone' ? 'desktop' : 'phone'; }) },
+      { key: 'm', label: 'Switch desktop / wide / phone', run: () => store.mutate((f) => { f.device = f.device === 'desktop' ? 'wide' : f.device === 'wide' ? 'phone' : 'desktop'; }) },
       { key: 'c', label: 'Edit caption', run: () => setTimeout(() => cap.focus(), 0) },
     ] },
     { group: 'File', items: [
