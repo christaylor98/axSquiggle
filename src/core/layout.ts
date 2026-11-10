@@ -1,9 +1,9 @@
-import { bounds, lineLabelSpot, textWidth, textBlock, contains, paraHeight, wrapText } from './geom';
+import { bounds, lineLabelSpot, textWidth, textBlock, contains, paraHeight, wrapText, termHeight } from './geom';
 import { borderFor, classify, GROUP_PAD, refitBorders, shift, type El } from './semantics';
 export { borderFor, GROUP_PAD, refitBorders };
 import { cloneFrame, cloneShape, frameSize, GRID, newId, type Frame, type Part, type Shape } from './types';
 
-export type Kind = 'button' | 'input' | 'text' | 'card' | 'image' | 'paragraph' | 'divider' | 'avatar' | 'radio' | 'checkbox' | 'header' | 'list' | 'columns' | 'toolbar' | 'dropdown' | 'search' | 'segmented' | 'badge';
+export type Kind = 'button' | 'input' | 'text' | 'card' | 'image' | 'paragraph' | 'divider' | 'avatar' | 'radio' | 'checkbox' | 'header' | 'list' | 'columns' | 'toolbar' | 'dropdown' | 'search' | 'segmented' | 'badge' | 'terminal';
 
 export const KEYWORDS: Record<string, Kind> = {
   button: 'button', input: 'input', text: 'text', h1: 'text', card: 'card', section: 'card',
@@ -12,13 +12,14 @@ export const KEYWORDS: Record<string, Kind> = {
   columns: 'columns', cols: 'columns', split: 'columns',
   toolbar: 'toolbar', tools: 'toolbar',
   dropdown: 'dropdown', select: 'dropdown', search: 'search',
+  terminal: 'terminal', term: 'terminal', console: 'terminal', shell: 'terminal',
   segmented: 'segmented', seg: 'segmented', tabs: 'segmented', btngroup: 'segmented', badge: 'badge', tag: 'badge', chip: 'badge',
 };
 
 export const ROLE_OF_KIND: Record<Kind, string> = {
   button: 'Button', input: 'Input', text: 'Text', card: 'Card', image: 'Image', paragraph: 'Paragraph',
   divider: 'Divider', avatar: 'Avatar', radio: 'Radio', checkbox: 'Checkbox', header: 'Header', list: 'List item', columns: 'Card', toolbar: 'Button',
-  dropdown: 'Input', search: 'Input', segmented: 'Button', badge: 'Button',
+  dropdown: 'Input', search: 'Input', segmented: 'Button', badge: 'Button', terminal: 'Terminal',
 };
 
 /** link: the text after "->" in "button Sign in -> 2" (a frame number or caption words), resolved to a frame id later. */
@@ -40,7 +41,7 @@ export function parseCell(s: string): Cell {
   let h: number | undefined;
   const hm = /^([\s\S]*?)\s*\{\s*h(?:eight)?\s*[=:]?\s*(\d{1,4})\s*\}\s*$/i.exec(t);
   if (hm) { t = hm[1].trim(); h = Math.max(MIN_H, Math.min(MAX_H, +hm[2])); }
-  const withLink = (c: Cell): Cell => ({ ...c, ...(link ? { link } : {}), ...(h !== undefined && (c.kind === 'image' || c.kind === 'card') ? { h } : {}) });
+  const withLink = (c: Cell): Cell => ({ ...c, ...(link ? { link } : {}), ...(h !== undefined && (c.kind === 'image' || c.kind === 'card' || c.kind === 'terminal') ? { h } : {}) });
   const m = /^(\S+)(?:\s+([\s\S]*))?$/.exec(t);
   if (m) {
     const kind = KEYWORDS[m[1].toLowerCase()];
@@ -55,16 +56,30 @@ export interface Node { cells: Cell[]; children: Node[]; raw: string }
 export function parseOutline(text: string): Node[] {
   const roots: Node[] = [];
   const stack: { level: number; node: Node }[] = [];
+  // A terminal's content is the lines indented under it, kept verbatim (spaces, | and all), up to the next line at its level.
+  let term: { cell: Cell; col: number; body: string[] } | null = null;
+  const endTerm = () => {
+    if (!term) return;
+    while (term.body.length && !term.body[term.body.length - 1].trim()) term.body.pop();
+    if (term.body.length) term.cell.label = [term.cell.label, ...term.body].filter((l, i) => i > 0 || l).join('\n');
+    term = null;
+  };
   for (const line of text.replace(/\r/g, '').split('\n')) {
-    if (!line.trim()) continue;
     const lead = /^[ \t]*/.exec(line)![0];
-    const level = lead.split('').reduce((n, ch) => n + (ch === '\t' ? 2 : 1), 0) >> 1;
+    const col = lead.replace(/\t/g, '  ').length;
+    if (term && (!line.trim() || col > term.col)) { term.body.push(line.replace(/\t/g, '  ').slice(Math.min(col, term.col + 2))); continue; }
+    endTerm();
+    if (!line.trim()) continue;
+    const level = col >> 1;
     const content = line.trim();
-    const node: Node = { cells: content.split('|').map(parseCell), children: [], raw: content };
+    const tc = /^(terminal|term|console|shell)\b/i.test(content) ? parseCell(content) : null;
+    const node: Node = { cells: tc ? [tc] : content.split('|').map(parseCell), children: [], raw: content };
+    if (tc) term = { cell: tc, col, body: [] };
     while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
     if (stack.length) stack[stack.length - 1].node.children.push(node); else roots.push(node);
     stack.push({ level, node });
   }
+  endTerm();
   return roots;
 }
 
@@ -103,6 +118,7 @@ export function makeElement(kind: Kind, label: string, x: number, y: number, w: 
     case 'card': { const h = height ?? 160; return { shapes: label ? [{ k: 'rect', x, y, w, h, role: 'Card' }, t(label, x + PAD, y + 32)] : [{ k: 'rect', x, y, w, h, role: 'Card' }], h, py: 0 }; } // >120 so a wide card is not a List item
     case 'image': { const h = height ?? (ctx.phone ? 140 : 160); return { shapes: [{ k: 'img', x, y, w, h }, ...(label ? [t(label, x + (w - textWidth(label)) / 2, y + h + 22)] : [])], h: label ? h + 30 : h, py: 0 }; }   // its description sits underneath
     case 'paragraph': { const h = label ? paraHeight(label, w) : 60; return { shapes: [label ? { k: 'tlines', x, y, w, h, s: label } : { k: 'tlines', x, y, w, h }], h, py: 0 }; }
+    case 'terminal': { const h = height ?? termHeight(label); return { shapes: [label ? { k: 'tlines', x, y, w, h, s: label, mono: true } : { k: 'tlines', x, y, w, h, mono: true }], h, py: 0 }; }
     case 'divider': return { shapes: [{ k: 'line', x1: x, y1: y + 8, x2: x + w, y2: y + 8 }], h: 16, py: 8 };
     case 'avatar': return { shapes: [{ k: 'ell', x, y, w: 40, h: 40, role: 'Avatar' }], h: 40, py: 0 };
     case 'radio': return { shapes: [{ k: 'ell', x, y: y + 2, w: 20, h: 20, role: 'Radio' }, ...(label ? [t(label, x + 28, y + 17)] : [])], h: labelH(label, 24), py: 2 };
@@ -271,6 +287,7 @@ export const STAMP_HELP: { name: string; also: string[]; hint: string }[] = [
   { name: 'list', also: ['item', 'row'], hint: 'list rows: /list Invoice 1042 (Enter adds the next)' },
   { name: 'image', also: ['img', 'pic', 'photo'], hint: 'an image placeholder' },
   { name: 'paragraph', also: ['para', 'p'], hint: 'body text lines (type the words in the Outline)' },
+  { name: 'terminal', also: ['term', 'console', 'shell'], hint: 'a terminal: commands and their output, lines kept as typed' },
   { name: 'avatar', also: [], hint: 'a person icon' },
   { name: 'divider', also: ['hr', 'line'], hint: 'a horizontal rule' },
 ];
@@ -303,7 +320,7 @@ export const ALIASES: Record<string, Kind> = {
   cb: 'checkbox', check: 'checkbox', tick: 'checkbox', rb: 'radio', btn: 'button', field: 'input', pic: 'image', photo: 'image', dd: 'dropdown',
   h: 'header', title: 'header', para: 'paragraph', line: 'divider', row: 'list', box: 'card',
 };
-const STAMP_W: Partial<Record<Kind, number>> = { input: 260, dropdown: 260, search: 260, card: 280, image: 200, paragraph: 300, divider: 240, list: 280, header: 0 };
+const STAMP_W: Partial<Record<Kind, number>> = { input: 260, dropdown: 260, search: 260, card: 280, image: 200, paragraph: 300, terminal: 560, divider: 240, list: 280, header: 0 };
 
 /**
  * "/radio Email, SMS" typed at a spot on the canvas: the shapes for that element(s) with their top-left at (x, y).
@@ -430,7 +447,7 @@ export function setLabel(frame: Frame, el: El, text: string): Frame {
   if (s.k === 'tlines') {
     // Paragraph copy lives on the shape itself; fit its height to the copy and move whatever sits below by the same amount.
     if (text) s.s = text; else delete s.s;
-    const need = text ? paraHeight(text, s.w) : 60, old = s.h;
+    const need = s.mono ? termHeight(text) : text ? paraHeight(text, s.w) : 60, old = s.h;
     if (need !== old) {   // fit the copy exactly: grow or shrink, and move what is below by the difference
       const bottom = s.y + old;
       s.h = need;

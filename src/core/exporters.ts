@@ -1,5 +1,5 @@
 import { rotatePt, rotOf } from './rotate';
-import { bounds, center, justifyDx, lineLabelSpot, linePts, paragraphDy, PARA_LINE, SUB_PX, textLines, textWidth, wrapText } from './geom';
+import { bounds, center, justifyDx, lineLabelSpot, linePts, paragraphDy, PARA_LINE, SUB_PX, textLines, textWidth, wrapText, termLines, TERM_FONT_PX, TERM_LINE, TERM_PAD } from './geom';
 import { classify } from './semantics';
 import { linksOf } from './links';
 import { frameSize, type Board, type Frame, type Pt, type Shape } from './types';
@@ -155,6 +155,8 @@ function shapeSVGRaw(s: Shape, font: string, hops?: Hop[]): string {
     case 'img': if (s.src) return `<svg x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" viewBox="0 0 ${n1(s.w)} ${n1(s.h)}" preserveAspectRatio="xMidYMid slice"><image href="${s.src}" width="${n1(s.w)}" height="${n1(s.h)}" preserveAspectRatio="xMidYMid slice"/></svg><rect x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" rx="3" ${STROKE}/>`;
       return `<rect x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" rx="3" ${STROKE}/><path d="M${n1(s.x)} ${n1(s.y)}L${n1(s.x + s.w)} ${n1(s.y + s.h)}M${n1(s.x + s.w)} ${n1(s.y)}L${n1(s.x)} ${n1(s.y + s.h)}" ${STROKE}/>`;
     case 'tlines': {
+      if (s.mono) return `<rect x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" rx="3" fill="#1e1e1e" stroke="${INK}" stroke-width="${INK_W}"/>` +
+        termLines(s.s || '$ _').map((ln, i) => `<text x="${n1(s.x + TERM_PAD)}" y="${n1(s.y + TERM_PAD + 13 + i * TERM_LINE)}" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="${TERM_FONT_PX}" fill="#e6e6e6" xml:space="preserve">${esc(ln)}</text>`).join('');
       if (s.s) return wrapParagraph(s).map((ln, i, all) => `<text x="${n1(s.x + justifyDx(ln, s.w, s.al))}" y="${n1(s.y + paragraphDy(all.length, s.h, s.av) + 18 + i * PARA_LINE)}" font-family="${esc(font)}" font-size="18" fill="${INK}">${esc(ln)}</text>`).join('');
       const n = tlineCount(s.h);
       let d = '';
@@ -248,6 +250,11 @@ export function markdown(b: Board, title = 'Storyboard'): string {
       out.push('### Links', '');
       for (const l of links) out.push(`- ${l.role}${l.label ? ` “${l.label}”` : ''} → ${l.to === null ? '(missing frame)' : `Frame ${l.to + 1}${b.frames[l.to].caption ? ': ' + b.frames[l.to].caption : ''}`}`);
       out.push('');
+    }
+    const terms = f.shapes.filter((s): s is Extract<Shape, { k: 'tlines' }> => s.k === 'tlines' && !!s.mono && !!s.s);
+    if (terms.length) {
+      out.push('### Terminal', '');
+      for (const s of terms) out.push('```console', s.s!, '```', '');
     }
     if (f.notes.length) {
       out.push('### Review notes', '');
@@ -365,6 +372,7 @@ export function excalidraw(b: Board): string {
           els.push(line(ox + s.x, s.y, ox + s.x + s.w, s.y + s.h), line(ox + s.x + s.w, s.y, ox + s.x, s.y + s.h));
           break;
         case 'tlines': {
+          if (s.mono) { els.push(base('rectangle', ox + s.x, s.y, s.w, s.h)); termLines(s.s || '$ _').forEach((ln, i) => els.push(text(ln, ox + s.x + TERM_PAD, s.y + TERM_PAD + i * TERM_LINE))); break; }
           if (s.s) { { const ls = wrapText(s.s, s.w), dy = paragraphDy(ls.length, s.h, s.av); ls.forEach((ln, i) => els.push(text(ln, ox + s.x + justifyDx(ln, s.w, s.al), s.y + dy + i * PARA_LINE))); } break; }
           const c = tlineCount(s.h);
           for (let i = 0; i < c; i++) {

@@ -20,7 +20,7 @@ export class Outline {
     root.innerHTML = `<div class="rows" role="list"></div>
       <div class="addbox"><div class="anchor"></div>
       <textarea rows="2" spellcheck="false" aria-label="Add elements" placeholder="Add: one line = one element&#10;button Save | button Cancel&#10;(paste an indented list to build a screen)"></textarea>
-      <div class="hint">Kinds: button, input (<code>input Email &quot;you@example.com&quot;</code> adds ghost hint text), text, h1, card/section, image/img (<code>image Cockpit {h=320}</code> sets its height), paragraph/p, divider/hr, avatar, radio, checkbox, header/nav, list/item. Enter adds; Shift+Enter is a new line.</div></div>`;
+      <div class="hint">Kinds: button, input (<code>input Email &quot;you@example.com&quot;</code> adds ghost hint text), text, h1, card/section, image/img (<code>image Cockpit {h=320}</code> sets its height), paragraph/p, terminal (lines indented under it are its content, as typed), divider/hr, avatar, radio, checkbox, header/nav, list/item. Enter adds; Shift+Enter is a new line.</div></div>`;
     this.list = root.querySelector('.rows')!;
     this.add = root.querySelector('textarea')!;
     this.anchorLbl = root.querySelector('.anchor')!;
@@ -117,14 +117,14 @@ export class Outline {
     const chip = document.createElement('span');
     chip.className = 'chip'; chip.textContent = el.role;
     // A paragraph is body copy, not a label: it gets its own multi-line box under the heading chip.
-    const para = el.role === 'Paragraph';
+    const term = el.role === 'Terminal', para = el.role === 'Paragraph' || term;
     // Labels that can run to several lines (a radio with a sub-label, a list item) get a box that grows; Shift+Enter adds a line.
     const multi = ['Radio', 'Checkbox', 'List item', 'Text'].includes(el.role);
     const inp = document.createElement(para || multi ? 'textarea' : 'input') as HTMLInputElement; // textarea behaves the same for what we use
     if (para || multi) {
       const ta = inp as unknown as HTMLTextAreaElement, min = para ? 66 : 26;
       ta.rows = para ? 3 : 1;
-      if (para) { ta.placeholder = 'Paragraph text'; row.classList.add('para'); }
+      if (para) { ta.placeholder = term ? '$ command and its output, as typed' : 'Paragraph text'; row.classList.add('para'); if (term) { ta.style.fontFamily = 'ui-monospace, Menlo, Consolas, monospace'; ta.style.whiteSpace = 'pre'; ta.wrap = 'off'; } }
       else { ta.classList.add('multi'); ta.title = 'Shift+Enter adds a line. Indent a later line (spaces) to make it a smaller sub-label.'; }
       const fit = () => { ta.style.height = 'auto'; ta.style.height = `${Math.max(min, ta.scrollHeight + 2)}px`; };
       ta.addEventListener('input', fit);
@@ -134,7 +134,7 @@ export class Outline {
     const editable = LABEL_ROLES.includes(el.role);
     inp.disabled = !editable;
     if (!para) inp.placeholder = editable ? 'label' : '';
-    inp.setAttribute('aria-label', para ? 'Paragraph text' : `${el.role} label`);
+    inp.setAttribute('aria-label', term ? 'Terminal text' : para ? 'Paragraph text' : `${el.role} label`);
     const del = document.createElement('button');
     del.className = 'x'; del.textContent = '×'; del.title = 'Delete'; del.setAttribute('aria-label', `Delete ${el.role}`);
 

@@ -38,6 +38,11 @@ export function describeFrame(b: Board, fi: number): string {
   const links = new Map(linksOf(b).filter((l) => l.from === fi).map((l) => [l.idx, l]));
   for (const { n, i, el } of listElements(f)) {
     const l = links.get(i);
+    if (el.role === 'Terminal') {
+      const pad = '  '.repeat(el.depth + 2);
+      lines.push(`${'  '.repeat(el.depth + 1)}${n}. Terminal (${bbox(f, i)})${l ? ` -> frame ${l.to === null ? '?' : l.to + 1}` : ''}`, ...(el.label ? el.label.split('\n').map((x) => pad + '| ' + x) : []));
+      continue;
+    }
     lines.push(`${'  '.repeat(el.depth + 1)}${n}. ${el.role}${el.label ? ` "${el.label.replace(/\s*\n\s*/g, ' / ')}"` : ''}${el.hint ? ` hint "${el.hint}"` : ''} (${bbox(f, i)})${l ? ` -> frame ${l.to === null ? '?' : l.to + 1}` : ''}`);
   }
   if (!f.shapes.length) lines.push('  (empty)');

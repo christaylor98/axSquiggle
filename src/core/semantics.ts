@@ -25,7 +25,7 @@ export interface Classified {
   owner: Map<number, number>;
 }
 
-export const LABEL_ROLES: Role[] = ['Circle', 'Button', 'Input', 'Card', 'Checkbox', 'Radio', 'Header', 'List item', 'Sidebar', 'Text', 'Paragraph', 'Arrow', 'Connector', 'Image'];
+export const LABEL_ROLES: Role[] = ['Circle', 'Button', 'Input', 'Card', 'Checkbox', 'Radio', 'Header', 'List item', 'Sidebar', 'Text', 'Paragraph', 'Terminal', 'Arrow', 'Connector', 'Image'];
 
 /** A box that may be turned: texts are judged in its own (unturned) frame. */
 type TBox = Box & { rot?: number };
@@ -124,7 +124,7 @@ export function classify(frame: Frame): Classified {
         break;
       }
       case 'img': roles.set(i, 'Image'); break;
-      case 'tlines': roles.set(i, 'Paragraph'); break;
+      case 'tlines': roles.set(i, s.mono ? 'Terminal' : 'Paragraph'); break;
       case 'line': roles.set(i, s.arrow || s.tail ? 'Arrow' : s.conn ? 'Connector' : 'Divider'); break;
       case 'free': roles.set(i, s.arrow ? 'Arrow' : 'Sketch'); break;
       case 'ell':

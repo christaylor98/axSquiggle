@@ -1,5 +1,5 @@
 import { rotOf, rotatePt } from '../core/rotate';
-import { bounds, center, justifyDx, linePts, paragraphDy, PARA_LINE, SUB_PX, textLines, wrapText, type Box } from '../core/geom';
+import { bounds, center, justifyDx, linePts, paragraphDy, PARA_LINE, SUB_PX, textLines, wrapText, termLines, TERM_FONT_PX, TERM_LINE, TERM_PAD, type Box } from '../core/geom';
 import { arrowHead, avatarGlyphs, freePath, HAND_FONT, lineD, lineHops, pathHead, tlineCount, type Hop } from '../core/exporters';
 import { frameSize, GRID, type Frame, type Note, type Pt, type Shape } from '../core/types';
 import type { Classified } from '../core/semantics';
@@ -95,6 +95,18 @@ function drawShapeRaw(ctx: CanvasRenderingContext2D, s: Shape, t: Theme, hops?: 
       ctx.stroke(); break;
     }
     case 'tlines': {
+      if (s.mono) {
+        // A terminal: dark box, monospace lines exactly as typed, clipped to the box.
+        ctx.save();
+        ctx.fillStyle = '#1e1e1e'; ctx.fillRect(s.x, s.y, s.w, s.h);
+        ctx.strokeStyle = t.ink; ctx.strokeRect(s.x, s.y, s.w, s.h);
+        ctx.beginPath(); ctx.rect(s.x, s.y, s.w, s.h); ctx.clip();
+        ctx.font = `${TERM_FONT_PX}px ui-monospace, Menlo, Consolas, monospace`; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#e6e6e6';
+        if (s.s) termLines(s.s).forEach((ln, i) => ctx.fillText(ln, s.x + TERM_PAD, s.y + TERM_PAD + 13 + i * TERM_LINE));
+        else { ctx.fillStyle = '#7d8590'; ctx.fillText('$ _', s.x + TERM_PAD, s.y + TERM_PAD + 13); }
+        ctx.restore();
+        break;
+      }
       if (s.s) {
         // Real paragraph copy: wrapped hand-lettered text, clipped to its box.
         ctx.save();

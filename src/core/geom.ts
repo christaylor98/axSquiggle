@@ -196,6 +196,11 @@ export const PARA_LINE = 24;
 /** Height a paragraph needs for its text at this width (never less than the 60px placeholder). */
 export const paraHeight = (s: string, width: number) => Math.max(60, wrapText(s, width).length * PARA_LINE + 8);
 
+/** A terminal block: monospace lines kept exactly as typed (no wrapping). */
+export const TERM_LINE = 18, TERM_PAD = 10, TERM_FONT_PX = 13;
+export const termLines = (s: string): string[] => s.replace(/\r/g, '').split('\n');
+export const termHeight = (s: string) => Math.max(60, termLines(s).length * TERM_LINE + 2 * TERM_PAD);
+
 export interface Box { x: number; y: number; w: number; h: number }
 
 /** A line's path: its two ends plus any waypoints it routes through. */

@@ -8,7 +8,7 @@ import { textWidth } from './geom';
 const LIM = 5000;
 const num = (v: unknown, d?: number): number | null => (typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= LIM ? v : d ?? null);
 
-const ROLES = ['Checkbox', 'Header', 'List item', 'Sidebar', 'Button', 'Input', 'Card', 'Image', 'Paragraph', 'Divider', 'Arrow', 'Connector', 'Sketch', 'Avatar', 'Radio', 'Circle', 'Text'] as const;
+const ROLES = ['Checkbox', 'Header', 'List item', 'Sidebar', 'Button', 'Input', 'Card', 'Image', 'Paragraph', 'Divider', 'Arrow', 'Connector', 'Sketch', 'Avatar', 'Radio', 'Circle', 'Text', 'Terminal'] as const;
 const ID_RE = /^[\w-]{1,24}$/;
 const linkOf = (v: unknown): string | null => (typeof v === 'string' && ID_RE.test(v) ? v : null);
 
@@ -30,6 +30,7 @@ export function validateShape(v: unknown): Shape | null {
       if (o.k !== 'tlines' && typeof o.id === 'string' && /^[\w-]{1,24}$/.test(o.id)) (sh as { id?: string }).id = o.id;
       if (o.k === 'tlines' && (o.al === 'center' || o.al === 'right')) (sh as { al?: 'center' | 'right' }).al = o.al;
       if (o.k === 'tlines' && (o.av === 'middle' || o.av === 'bottom')) (sh as { av?: 'middle' | 'bottom' }).av = o.av;
+      if (o.k === 'tlines' && o.mono === true) (sh as { mono?: boolean }).mono = true;
       if (o.k === 'rect' || o.k === 'ell') {
         const lv = o.lbl, lj = o.lj, h = sh as { lbl?: LabelV; lj?: LabelJ };
         if (typeof lv === 'string' && (LABEL_V as readonly string[]).includes(lv)) h.lbl = lv as LabelV;

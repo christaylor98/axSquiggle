@@ -79,6 +79,11 @@ function frameHTML(f: Frame, fi: number, all: Board): string {
         label(e, 'lbl-cap');
         break;
       }
+      case 'Terminal': {
+        if (s.k !== 'tlines') break;
+        out.push(`<pre class="e term${go}"${tg} style="${box(b)}">${esc(s.s || '$ _')}</pre>`);
+        break;
+      }
       case 'Paragraph': {
         if (s.k !== 'tlines') break;
         if (s.s) out.push(`<p class="e para${go}"${tg} style="${box(b)};text-align:${s.al ?? 'left'};${s.av === 'bottom' ? 'display:flex;align-items:flex-end;' : s.av === 'middle' ? 'display:flex;align-items:center;' : ''}"><span>${esc(s.s)}</span></p>`);
@@ -138,7 +143,7 @@ const CSS = `
 .avatar{border-radius:50%;background:var(--side);color:var(--mute);overflow:hidden}
 .dot{border-radius:50%;background:var(--accent)}
 .img{background:linear-gradient(135deg,var(--side),var(--line));border-radius:calc(var(--r) * .7);color:var(--mute);display:flex;align-items:center;justify-content:center;overflow:hidden}.img img{width:100%;height:100%;object-fit:cover}.img .ph{width:34%;max-width:96px}
-.para{color:var(--ink);font-size:15px;line-height:24px;overflow:hidden}.para span{display:block;width:100%;white-space:pre-wrap}
+.term{margin:0;background:#1e1e1e;color:#e6e6e6;font:13px/18px ui-monospace,Menlo,Consolas,monospace;padding:10px;box-sizing:border-box;overflow:hidden;white-space:pre;border-radius:4px}.para{color:var(--ink);font-size:15px;line-height:24px;overflow:hidden}.para span{display:block;width:100%;white-space:pre-wrap}
 .skel b{display:block;height:9px;border-radius:5px;margin:0 0 11px;background:linear-gradient(90deg,var(--line) 25%,var(--side) 50%,var(--line) 75%);background-size:200% 100%;animation:sh 1.6s linear infinite}
 @keyframes sh{to{background-position:-200% 0}}
 .rule{background:var(--line)}
