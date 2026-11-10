@@ -57,7 +57,7 @@ function frameHTML(f: Frame, fi: number, all: Board): string {
     switch (e.role) {
       case 'Header': out.push(`<div class="e header${go}"${tg} style="${box(b)}${rot(s)}"></div>`); label(e, 'lbl-header'); break;
       case 'Sidebar': out.push(`<div class="e side${go}"${tg} style="${box(b)}"></div>`); label(e, 'lbl-side'); break;
-      case 'Card': out.push(`<div class="e card${s.k === 'rect' && s.grp ? ' grp' : ''}${go}"${tg} style="${box(b)}${rot(s)}${s.k === 'rect' && s.tone ? `;background:${TONE_FILL[s.tone]}` : ''}"></div>`); label(e, 'lbl-card'); break;
+      case 'Card': out.push(`<div class="e card${s.k === 'rect' && s.grp ? ' grp' : ''}${go}"${tg} style="${box(b)}${rot(s)}${s.k === 'rect' && s.tone ? `;background:${TONE_FILL[s.tone]}` : ''}">${s.k === 'rect' && s.legend ? `<span class="legend">${esc(s.legend)}</span>` : ''}</div>`); label(e, 'lbl-card'); break;
       case 'List item': out.push(`<div class="e item${go}"${tg} style="${box(b)}">${tg ? '<i>›</i>' : ''}</div>`); label(e, 'lbl-item'); break;
       case 'Button': {
         const t = e.labelIdx !== null && sh[e.labelIdx].k === 'text' ? (sh[e.labelIdx] as { s: string }).s : e.label;
@@ -157,6 +157,7 @@ const CSS = `
 .avatar{border-radius:50%;background:var(--side);color:var(--mute);overflow:hidden}
 .dot{border-radius:50%;background:var(--accent)}
 .img{background:linear-gradient(135deg,var(--side),var(--line));border-radius:calc(var(--r) * .7);color:var(--mute);display:flex;align-items:center;justify-content:center;overflow:hidden}.img img{width:100%;height:100%;object-fit:cover}.img .ph{width:34%;max-width:96px}
+.legend{position:absolute;left:12px;top:-9px;padding:0 6px;background:var(--bg);font-size:13px;line-height:18px;color:var(--mute);white-space:nowrap}
 .wires{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}.wires path{fill:none;stroke:var(--mute);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.wire-lbl{font-size:12px;color:var(--mute);background:var(--bg);padding:0 3px}
 .term{margin:0;background:#1e1e1e;color:#e6e6e6;font:13px/18px ui-monospace,Menlo,Consolas,monospace;padding:10px;box-sizing:border-box;overflow:hidden;white-space:pre;border-radius:4px}.para{color:var(--ink);font-size:15px;line-height:24px;overflow:hidden}.para span{display:block;width:100%;white-space:pre-wrap}
 .skel b{display:block;height:9px;border-radius:5px;margin:0 0 11px;background:linear-gradient(90deg,var(--line) 25%,var(--side) 50%,var(--line) 75%);background-size:200% 100%;animation:sh 1.6s linear infinite}

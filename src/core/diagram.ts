@@ -1,5 +1,6 @@
 import { connect } from './connect';
 import { lineLabelSpot, textWidth, wrapText } from './geom';
+import { borderFor } from './semantics';
 import { newId, TONES, type Frame, type Shape, type Tone } from './types';
 
 /**
@@ -51,10 +52,10 @@ export function parseDiagram(text: string): Diagram {
   return { groups, edges };
 }
 
-const GAP_X = 16, GAP_Y = 48, BAND = 30, MIN_W = 150, COL_GAP = 56, STACK_GAP = 14, LINE = 20;
+const GROUP_PAD = 10, GAP_X = 16, GAP_Y = 48, BAND = 30, MIN_W = 150, COL_GAP = 56, STACK_GAP = 14, LINE = 20;
 
 /** A box's text: its name, then its second line wrapped to the box width. */
-const boxText = (n: DNode, bw: number) => [n.name, ...(n.sub ? wrapText(n.sub, bw - 20) : [])];
+const boxText = (n: DNode, bw: number) => [...wrapText(n.name, bw - 20), ...(n.sub ? wrapText(n.sub, bw - 20) : [])];
 const boxH = (lines: number) => Math.max(44, 14 + lines * LINE + 10);
 
 /**
@@ -66,6 +67,8 @@ export function buildDiagram(text: string, x: number, y: number, w: number): { s
   const first = text.split('\n')[0].trim().toLowerCase();
   const across = first === 'across' || first === 'lr';
   const d = parseDiagram(across ? text.split('\n').slice(1).join('\n') : text);
+  // Titled groups get a border just outside their boxes: keep it inside the space we were given.
+  if (d.groups.some((g) => g.title)) { x += GROUP_PAD; w -= 2 * GROUP_PAD; }
   const shapes: Shape[] = [];
   const box = new Map<string, number>();   // node name -> index of its rect in `shapes`
   const place = (n: DNode, bx: number, by: number, bw: number, bh: number, lines: string[]) => {
@@ -75,19 +78,28 @@ export function buildDiagram(text: string, x: number, y: number, w: number): { s
     shapes.push({ k: 'text', x: bx + 10, y: by + 26, s: lines.join('\n'), of: id });
   };
   let cy = y, bottom = y;
+  // A titled group gets a border round its boxes with the title in the border's top line.
+  const frameGroup = (g: DGroup, start: number): boolean => {
+    if (!g.title || shapes.length === start) return false;
+    const r = borderFor(shapes.slice(start)) as Extract<Shape, { k: 'rect' }>;
+    shapes.push({ ...r, dg: true, legend: g.title });
+    return true;
+  };
   if (across) {
     const n = Math.max(1, d.groups.length);
     const cw = Math.floor((w - (n - 1) * COL_GAP) / n);
     d.groups.forEach((g, gi) => {
       const cx = x + gi * (cw + COL_GAP);
       let yy = y;
-      if (g.title) { shapes.push({ k: 'text', x: cx, y: yy + 18, s: g.title, free: true }); yy += BAND; }
+      const start = shapes.length;
+      if (g.title) yy += BAND;
       for (const node of g.nodes) {
         const lines = boxText(node, cw), bh = boxH(lines.length);
         place(node, cx, yy, cw, bh, lines);
         yy += bh + STACK_GAP;
       }
-      bottom = Math.max(bottom, yy - STACK_GAP);
+      bottom = Math.max(bottom, yy - STACK_GAP + (g.title ? GROUP_PAD : 0));
+      frameGroup(g, start);
     });
   } else {
     // With no arrows to route, rows sit close; a group with few boxes shares the full width between them.
@@ -96,13 +108,15 @@ export function buildDiagram(text: string, x: number, y: number, w: number): { s
     for (const g of d.groups) {
       const perRow = Math.max(1, Math.min(cap, d.edges.length ? 5 : g.nodes.length));
       const bw = Math.floor((w - (perRow - 1) * GAP_X) / perRow);
-      if (g.title) { shapes.push({ k: 'text', x, y: cy + 18, s: g.title, free: true }); cy += BAND; }
+      const start = shapes.length;
+      if (g.title) cy += BAND;
       const bh = Math.max(...g.nodes.map((nd) => boxH(boxText(nd, bw).length)), 44);
       g.nodes.forEach((nd, k) => {
         const col = k % perRow, row = Math.floor(k / perRow);
         place(nd, x + col * (bw + GAP_X), cy + row * (bh + gy), bw, bh, boxText(nd, bw));
       });
       cy += Math.ceil(g.nodes.length / perRow) * (bh + gy);
+      if (frameGroup(g, start)) cy += GROUP_PAD;
     }
     bottom = cy - gy;
   }

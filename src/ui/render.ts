@@ -78,7 +78,13 @@ function drawShapeRaw(ctx: CanvasRenderingContext2D, s: Shape, t: Theme, hops?: 
   ctx.strokeStyle = t.ink; ctx.fillStyle = t.ink; ctx.lineWidth = 2.25; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.beginPath();
   switch (s.k) {
-    case 'rect': ctx.roundRect(s.x, s.y, s.w, s.h, 3); if (s.tone) { ctx.save(); ctx.fillStyle = TONE_FILL[s.tone]; ctx.fill(); ctx.restore(); } ctx.stroke(); break;
+    case 'rect': ctx.roundRect(s.x, s.y, s.w, s.h, 3); if (s.tone) { ctx.save(); ctx.fillStyle = TONE_FILL[s.tone]; ctx.fill(); ctx.restore(); } ctx.stroke();
+      if (s.legend) {   // a group's title sits in its border's top line, on a patch of paper that breaks the line
+        ctx.save(); ctx.font = `16px ${HAND_FONT}`; const tw = ctx.measureText(s.legend).width;
+        ctx.fillStyle = t.paper; ctx.fillRect(s.x + 12, s.y - 10, tw + 12, 20);
+        ctx.fillStyle = t.ink; ctx.textBaseline = 'middle'; ctx.fillText(s.legend, s.x + 18, s.y); ctx.restore(); ctx.beginPath();
+      }
+      break;
     case 'ell': ctx.ellipse(s.x + s.w / 2, s.y + s.h / 2, Math.abs(s.w / 2), Math.abs(s.h / 2), 0, 0, Math.PI * 2); ctx.stroke(); break;
     case 'img': {
       const pic = s.src ? picOf(s.src) : null;

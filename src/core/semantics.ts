@@ -349,7 +349,9 @@ export function smartSize(frame: Frame, fixed: number | null = null): Frame {
   const { w: W } = frameSize(f);
   const phone = f.device === 'phone';
   // Diagram boxes are placed with their routed arrows: sizing them here would close the gaps the arrows run through.
-  const dgBoxes = f.shapes.map((s) => (s.k === 'rect' && s.dg ? { x: s.x, y: s.y, w: s.w, h: s.h } : null));
+  const dgIds = new Set(f.shapes.flatMap((s) => (s.k === 'rect' && s.dg && s.id ? [s.id] : [])));
+  const dgBoxes = f.shapes.map((s) => (s.k === 'rect' && s.dg ? { x: s.x, y: s.y, w: s.w, h: s.h }
+    : s.k === 'text' && s.of && dgIds.has(s.of) ? { x: s.x, y: s.y } : null));   // and the text inside them
   const c = classify(f);
   const rectOf = (i: number) => f.shapes[i] as Extract<Frame['shapes'][number], { k: 'rect' }>;
   const lbl = (e: El) => (e.labelIdx !== null ? (f.shapes[e.labelIdx] as { s: string }) : null);
@@ -507,6 +509,6 @@ export function smartSize(frame: Frame, fixed: number | null = null): Frame {
   const { h: baseH } = DEVICES[f.device];
   const bottom = f.shapes.reduce((m, sh) => { const b = bounds(sh); return Math.max(m, b.y + b.h); }, 0) + GRID;
   if (bottom > baseH) f.h = Math.ceil(bottom / GRID) * GRID; else delete f.h;
-  dgBoxes.forEach((b, i) => { const r = f.shapes[i]; if (b && r.k === 'rect') Object.assign(r, b); });
+  dgBoxes.forEach((b, i) => { const r = f.shapes[i]; if (b && (r.k === 'rect' || r.k === 'text')) { Object.assign(r, b); if (r.k === 'text') delete r.wrap; } });
   return f;
 }

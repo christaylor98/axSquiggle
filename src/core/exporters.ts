@@ -150,7 +150,8 @@ export function shapeSVG(s: Shape, font: string, hops?: Hop[]): string {
 
 function shapeSVGRaw(s: Shape, font: string, hops?: Hop[]): string {
   switch (s.k) {
-    case 'rect': return `<rect x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" rx="3" ${s.tone ? STROKE.replace('fill="none"', `fill="${TONE_FILL[s.tone]}"`) : STROKE}/>`;
+    case 'rect': return `<rect x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" rx="3" ${s.tone ? STROKE.replace('fill="none"', `fill="${TONE_FILL[s.tone]}"`) : STROKE}/>` +
+      (s.legend ? `<rect x="${n1(s.x + 12)}" y="${n1(s.y - 10)}" width="${n1(textWidth(s.legend) * 16 / 18 + 12)}" height="20" fill="#ffffff"/><text x="${n1(s.x + 18)}" y="${n1(s.y + 5)}" font-family="${esc(font)}" font-size="16" fill="${INK}">${esc(s.legend)}</text>` : '');
     case 'ell': return `<ellipse cx="${n1(s.x + s.w / 2)}" cy="${n1(s.y + s.h / 2)}" rx="${n1(s.w / 2)}" ry="${n1(s.h / 2)}" ${STROKE}/>`;
     case 'img': if (s.src) return `<svg x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" viewBox="0 0 ${n1(s.w)} ${n1(s.h)}" preserveAspectRatio="xMidYMid slice"><image href="${s.src}" width="${n1(s.w)}" height="${n1(s.h)}" preserveAspectRatio="xMidYMid slice"/></svg><rect x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" rx="3" ${STROKE}/>`;
       return `<rect x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" rx="3" ${STROKE}/><path d="M${n1(s.x)} ${n1(s.y)}L${n1(s.x + s.w)} ${n1(s.y + s.h)}M${n1(s.x + s.w)} ${n1(s.y)}L${n1(s.x)} ${n1(s.y + s.h)}" ${STROKE}/>`;

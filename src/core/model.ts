@@ -25,6 +25,7 @@ export function validateShape(v: unknown): Shape | null {
       if (o.k === 'rect' && o.grp === true) (sh as { grp?: boolean }).grp = true;
       if (o.k === 'rect' && o.sm === true) (sh as { sm?: boolean }).sm = true;
       if (o.k === 'rect' && o.dg === true) (sh as { dg?: boolean }).dg = true;
+      if (o.k === 'rect' && typeof o.legend === 'string' && o.legend) (sh as { legend?: string }).legend = o.legend.slice(0, 160);
       if (o.k === 'rect' && typeof o.tone === 'string' && (TONES as readonly string[]).includes(o.tone)) (sh as { tone?: string }).tone = o.tone;
       if ((o.k === 'rect' || o.k === 'ell') && typeof o.role === 'string' && (ROLES as readonly string[]).includes(o.role)) (sh as { role?: string }).role = o.role;
       const rt = num(o.rot); if (rt && Math.abs(rt) < 360) (sh as { rot?: number }).rot = Math.round(rt * 100) / 100;
