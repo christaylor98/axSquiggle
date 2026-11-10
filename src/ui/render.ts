@@ -1,7 +1,7 @@
 import { rotOf, rotatePt } from '../core/rotate';
 import { bounds, center, justifyDx, linePts, paragraphDy, PARA_LINE, SUB_PX, textLines, wrapText, termLines, TERM_FONT_PX, TERM_LINE, TERM_PAD, type Box } from '../core/geom';
 import { arrowHead, avatarGlyphs, freePath, HAND_FONT, lineD, lineHops, pathHead, tlineCount, type Hop } from '../core/exporters';
-import { frameSize, GRID, type Frame, type Note, type Pt, type Shape } from '../core/types';
+import { frameSize, GRID, TONE_FILL, type Frame, type Note, type Pt, type Shape } from '../core/types';
 import type { Classified } from '../core/semantics';
 
 export interface Theme { paper: string; ink: string; grey: string; grid: string; accent: string }
@@ -78,7 +78,7 @@ function drawShapeRaw(ctx: CanvasRenderingContext2D, s: Shape, t: Theme, hops?: 
   ctx.strokeStyle = t.ink; ctx.fillStyle = t.ink; ctx.lineWidth = 2.25; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   ctx.beginPath();
   switch (s.k) {
-    case 'rect': ctx.roundRect(s.x, s.y, s.w, s.h, 3); ctx.stroke(); break;
+    case 'rect': ctx.roundRect(s.x, s.y, s.w, s.h, 3); if (s.tone) { ctx.save(); ctx.fillStyle = TONE_FILL[s.tone]; ctx.fill(); ctx.restore(); } ctx.stroke(); break;
     case 'ell': ctx.ellipse(s.x + s.w / 2, s.y + s.h / 2, Math.abs(s.w / 2), Math.abs(s.h / 2), 0, 0, Math.PI * 2); ctx.stroke(); break;
     case 'img': {
       const pic = s.src ? picOf(s.src) : null;
@@ -125,7 +125,7 @@ function drawShapeRaw(ctx: CanvasRenderingContext2D, s: Shape, t: Theme, hops?: 
       ctx.stroke(); break;
     }
     case 'line':
-      { const lp = linePts(s); ctx.stroke(new Path2D(lineD(s, hops))); ctx.beginPath();
+      { const lp = linePts(s); if (s.dash) ctx.setLineDash([7, 6]); ctx.stroke(new Path2D(lineD(s, hops))); ctx.setLineDash([]); ctx.beginPath();
         if (s.arrow) { const pv = lp[lp.length - 2]; const [ax, ay, bx, by] = arrowHead(pv.x, pv.y, s.x2, s.y2); ctx.moveTo(ax, ay); ctx.lineTo(s.x2, s.y2); ctx.lineTo(bx, by); }
         if (s.tail) { const nx = lp[1]; const [ax, ay, bx, by] = arrowHead(nx.x, nx.y, s.x1, s.y1); ctx.moveTo(ax, ay); ctx.lineTo(s.x1, s.y1); ctx.lineTo(bx, by); } }
       ctx.stroke(); break;

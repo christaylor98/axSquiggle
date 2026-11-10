@@ -2,8 +2,9 @@ import { bounds, lineLabelSpot, textWidth, textBlock, contains, paraHeight, wrap
 import { borderFor, classify, GROUP_PAD, refitBorders, shift, type El } from './semantics';
 export { borderFor, GROUP_PAD, refitBorders };
 import { cloneFrame, cloneShape, frameSize, GRID, newId, type Frame, type Part, type Shape } from './types';
+import { buildDiagram } from './diagram';
 
-export type Kind = 'button' | 'input' | 'text' | 'card' | 'image' | 'paragraph' | 'divider' | 'avatar' | 'radio' | 'checkbox' | 'header' | 'list' | 'columns' | 'toolbar' | 'dropdown' | 'search' | 'segmented' | 'badge' | 'terminal';
+export type Kind = 'button' | 'input' | 'text' | 'card' | 'image' | 'paragraph' | 'divider' | 'avatar' | 'radio' | 'checkbox' | 'header' | 'list' | 'columns' | 'toolbar' | 'dropdown' | 'search' | 'segmented' | 'badge' | 'terminal' | 'diagram';
 
 export const KEYWORDS: Record<string, Kind> = {
   button: 'button', input: 'input', text: 'text', h1: 'text', card: 'card', section: 'card',
@@ -12,14 +13,14 @@ export const KEYWORDS: Record<string, Kind> = {
   columns: 'columns', cols: 'columns', split: 'columns',
   toolbar: 'toolbar', tools: 'toolbar',
   dropdown: 'dropdown', select: 'dropdown', search: 'search',
-  terminal: 'terminal', term: 'terminal', console: 'terminal', shell: 'terminal',
+  diagram: 'diagram', terminal: 'terminal', term: 'terminal', console: 'terminal', shell: 'terminal',
   segmented: 'segmented', seg: 'segmented', tabs: 'segmented', btngroup: 'segmented', badge: 'badge', tag: 'badge', chip: 'badge',
 };
 
 export const ROLE_OF_KIND: Record<Kind, string> = {
   button: 'Button', input: 'Input', text: 'Text', card: 'Card', image: 'Image', paragraph: 'Paragraph',
   divider: 'Divider', avatar: 'Avatar', radio: 'Radio', checkbox: 'Checkbox', header: 'Header', list: 'List item', columns: 'Card', toolbar: 'Button',
-  dropdown: 'Input', search: 'Input', segmented: 'Button', badge: 'Button', terminal: 'Terminal',
+  dropdown: 'Input', search: 'Input', segmented: 'Button', badge: 'Button', terminal: 'Terminal', diagram: 'Card',
 };
 
 /** link: the text after "->" in "button Sign in -> 2" (a frame number or caption words), resolved to a frame id later. */
@@ -72,7 +73,7 @@ export function parseOutline(text: string): Node[] {
     if (!line.trim()) continue;
     const level = col >> 1;
     const content = line.trim();
-    const tc = /^(terminal|term|console|shell)\b/i.test(content) ? parseCell(content) : null;
+    const tc = /^(terminal|term|console|shell|diagram)\b/i.test(content) ? parseCell(content) : null;
     const node: Node = { cells: tc ? [tc] : content.split('|').map(parseCell), children: [], raw: content };
     if (tc) term = { cell: tc, col, body: [] };
     while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
@@ -118,6 +119,7 @@ export function makeElement(kind: Kind, label: string, x: number, y: number, w: 
     case 'card': { const h = height ?? 160; return { shapes: label ? [{ k: 'rect', x, y, w, h, role: 'Card' }, t(label, x + PAD, y + 32)] : [{ k: 'rect', x, y, w, h, role: 'Card' }], h, py: 0 }; } // >120 so a wide card is not a List item
     case 'image': { const h = height ?? (ctx.phone ? 140 : 160); return { shapes: [{ k: 'img', x, y, w, h }, ...(label ? [t(label, x + (w - textWidth(label)) / 2, y + h + 22)] : [])], h: label ? h + 30 : h, py: 0 }; }   // its description sits underneath
     case 'paragraph': { const h = label ? paraHeight(label, w) : 60; return { shapes: [label ? { k: 'tlines', x, y, w, h, s: label } : { k: 'tlines', x, y, w, h }], h, py: 0 }; }
+    case 'diagram': { const d = buildDiagram(label, x, y, w); return { shapes: d.shapes, h: d.h, py: 0 }; }
     case 'terminal': { const h = height ?? termHeight(label); return { shapes: [label ? { k: 'tlines', x, y, w, h, s: label, mono: true } : { k: 'tlines', x, y, w, h, mono: true }], h, py: 0 }; }
     case 'divider': return { shapes: [{ k: 'line', x1: x, y1: y + 8, x2: x + w, y2: y + 8 }], h: 16, py: 8 };
     case 'avatar': return { shapes: [{ k: 'ell', x, y, w: 40, h: 40, role: 'Avatar' }], h: 40, py: 0 };
@@ -287,6 +289,7 @@ export const STAMP_HELP: { name: string; also: string[]; hint: string }[] = [
   { name: 'list', also: ['item', 'row'], hint: 'list rows: /list Invoice 1042 (Enter adds the next)' },
   { name: 'image', also: ['img', 'pic', 'photo'], hint: 'an image placeholder' },
   { name: 'paragraph', also: ['para', 'p'], hint: 'body text lines (type the words in the Outline)' },
+  { name: 'diagram', also: [], hint: 'boxes in groups with arrows: indented lines, "group Title", "A -> B : why", "A ~> B" (related)' },
   { name: 'terminal', also: ['term', 'console', 'shell'], hint: 'a terminal: commands and their output, lines kept as typed' },
   { name: 'avatar', also: [], hint: 'a person icon' },
   { name: 'divider', also: ['hr', 'line'], hint: 'a horizontal rule' },

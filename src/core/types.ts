@@ -7,12 +7,17 @@ export type LabelJ = 'left' | 'center' | 'right';
 export const LABEL_V: readonly LabelV[] = ['top', 'inTop', 'middle', 'inBottom', 'bottom'];
 export const LABEL_J: readonly LabelJ[] = ['left', 'center', 'right'];
 
+/** A box's fill, so state reads at a glance: how alive (hot, warm, cold) or how healthy (green, amber, red). */
+export type Tone = 'hot' | 'warm' | 'cold' | 'green' | 'amber' | 'red';
+export const TONES: readonly Tone[] = ['hot', 'warm', 'cold', 'green', 'amber', 'red'];
+export const TONE_FILL: Record<Tone, string> = { hot: '#ffc078', warm: '#ffe8cc', cold: '#e9ecef', green: '#b2f2bb', amber: '#ffec99', red: '#ffc9c9' };
+
 export type Shape =
-  | { k: 'rect'; x: number; y: number; w: number; h: number; link?: string; grp?: boolean; role?: Role; sm?: boolean; rot?: number; lbl?: LabelV; lj?: LabelJ; id?: string } // grp: an auto-fitted border around a group; sm: a compact (toolbar) button
+  | { k: 'rect'; x: number; y: number; w: number; h: number; link?: string; grp?: boolean; role?: Role; sm?: boolean; rot?: number; lbl?: LabelV; lj?: LabelJ; id?: string; tone?: Tone; dg?: boolean } // dg: a diagram box, laid out with its arrows; auto-sizing leaves it alone // grp: an auto-fitted border around a group; sm: a compact (toolbar) button
   | { k: 'ell'; x: number; y: number; w: number; h: number; link?: string; role?: Role; rot?: number; lbl?: LabelV; lj?: LabelJ; id?: string }
   | { k: 'img'; x: number; y: number; w: number; h: number; link?: string; rot?: number; src?: string; fn?: string; id?: string } // src: data URL of a picture to show in it (otherwise the crossed placeholder); its description is the text underneath
   | { k: 'tlines'; x: number; y: number; w: number; h: number; s?: string; link?: string; rot?: number; al?: 'center' | 'right'; av?: 'middle' | 'bottom'; mono?: boolean } // s: paragraph copy; absent = grey placeholder lines. mono: a terminal block (monospace lines kept as typed, dark background)
-  | { k: 'line'; x1: number; y1: number; x2: number; y2: number; arrow?: boolean; tail?: boolean; conn?: boolean; via?: number[][]; hop?: boolean; id?: string } // id: given once the line has a label, which names it in `of`
+  | { k: 'line'; x1: number; y1: number; x2: number; y2: number; arrow?: boolean; tail?: boolean; conn?: boolean; dash?: boolean; via?: number[][]; hop?: boolean; id?: string } // id: given once the line has a label, which names it in `of`
   | { k: 'text'; x: number; y: number; s: string; link?: string; ghost?: boolean; rot?: number; free?: boolean; of?: string; wrap?: number; al?: 'center' | 'right' } // al: how the lines of a several-line label line up with each other (default left). wrap: the width the words are wrapped to (set by the label placement of a box or circle). free: detached, never a shape's label. of: the id of the shape or arrow this is the label of (kept however far either moves; D cuts it). rot: degrees clockwise about the centre (boxes and text only; lines and sketches just move their points). ghost: placeholder text inside an input, shown greyed
   | { k: 'free'; pts: number[][]; arrow?: boolean };
 

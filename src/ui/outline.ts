@@ -20,7 +20,7 @@ export class Outline {
     root.innerHTML = `<div class="rows" role="list"></div>
       <div class="addbox"><div class="anchor"></div>
       <textarea rows="2" spellcheck="false" aria-label="Add elements" placeholder="Add: one line = one element&#10;button Save | button Cancel&#10;(paste an indented list to build a screen)"></textarea>
-      <div class="hint">Kinds: button, input (<code>input Email &quot;you@example.com&quot;</code> adds ghost hint text), text, h1, card/section, image/img (<code>image Cockpit {h=320}</code> sets its height), paragraph/p, terminal (lines indented under it are its content, as typed), divider/hr, avatar, radio, checkbox, header/nav, list/item. Enter adds; Shift+Enter is a new line.</div></div>`;
+      <div class="hint">Kinds: button, input (<code>input Email &quot;you@example.com&quot;</code> adds ghost hint text), text, h1, card/section, image/img (<code>image Cockpit {h=320}</code> sets its height), paragraph/p, terminal (lines indented under it are its content, as typed), diagram (indented: group Title, box names, A -> B : why, A ~> B related), divider/hr, avatar, radio, checkbox, header/nav, list/item. Enter adds; Shift+Enter is a new line.</div></div>`;
     this.list = root.querySelector('.rows')!;
     this.add = root.querySelector('textarea')!;
     this.anchorLbl = root.querySelector('.anchor')!;

@@ -1,8 +1,9 @@
-import { avatarPath, esc, tlineCount } from './exporters';
+import { arrowHead, avatarPath, esc, lineD, tlineCount } from './exporters';
+import { linePts } from './geom';
 import { bounds, type Box } from './geom';
 import { classify, type El } from './semantics';
 import { linkable } from './links';
-import { frameSize, type Board, type Frame, type Shape } from './types';
+import { frameSize, TONE_FILL, type Board, type Frame, type Shape } from './types';
 
 /**
  * A realistic preview of the whole board: every frame is rebuilt from what its shapes MEAN (a button is a real button, an input a real
@@ -56,7 +57,7 @@ function frameHTML(f: Frame, fi: number, all: Board): string {
     switch (e.role) {
       case 'Header': out.push(`<div class="e header${go}"${tg} style="${box(b)}${rot(s)}"></div>`); label(e, 'lbl-header'); break;
       case 'Sidebar': out.push(`<div class="e side${go}"${tg} style="${box(b)}"></div>`); label(e, 'lbl-side'); break;
-      case 'Card': out.push(`<div class="e card${s.k === 'rect' && s.grp ? ' grp' : ''}${go}"${tg} style="${box(b)}${rot(s)}"></div>`); label(e, 'lbl-card'); break;
+      case 'Card': out.push(`<div class="e card${s.k === 'rect' && s.grp ? ' grp' : ''}${go}"${tg} style="${box(b)}${rot(s)}${s.k === 'rect' && s.tone ? `;background:${TONE_FILL[s.tone]}` : ''}"></div>`); label(e, 'lbl-card'); break;
       case 'List item': out.push(`<div class="e item${go}"${tg} style="${box(b)}">${tg ? '<i>›</i>' : ''}</div>`); label(e, 'lbl-item'); break;
       case 'Button': {
         const t = e.labelIdx !== null && sh[e.labelIdx].k === 'text' ? (sh[e.labelIdx] as { s: string }).s : e.label;
@@ -100,8 +101,21 @@ function frameHTML(f: Frame, fi: number, all: Board): string {
         break;
       }
       case 'Divider': out.push(`<div class="e rule" style="${box({ x: b.x, y: b.y, w: Math.max(b.w, 1), h: Math.max(b.h, 1) })}"></div>`); break;
-      default: break;   // arrows, connectors and sketches are notes to the designer, not part of the screen
+      default: break;   // sketches are notes to the designer, not part of the screen
     }
+  }
+  // Arrows and connectors (a diagram, a flow) are drawn over the screen in one layer that never takes a click.
+  const ls = sh.filter((s): s is Extract<Shape, { k: 'line' }> => s.k === 'line' && (!!s.arrow || !!s.tail || !!s.conn || !!s.dash));
+  if (ls.length) {
+    const paths = ls.map((s) => {
+      const lp = linePts(s);
+      let heads = '';
+      if (s.arrow) { const pv = lp[lp.length - 2]; const [ax, ay, bx, by] = arrowHead(pv.x, pv.y, s.x2, s.y2); heads += `M${n1(ax)} ${n1(ay)}L${n1(s.x2)} ${n1(s.y2)}L${n1(bx)} ${n1(by)}`; }
+      if (s.tail) { const nx = lp[1]; const [ax, ay, bx, by] = arrowHead(nx.x, nx.y, s.x1, s.y1); heads += `M${n1(ax)} ${n1(ay)}L${n1(s.x1)} ${n1(s.y1)}L${n1(bx)} ${n1(by)}`; }
+      return `<path d="${lineD(s)}"${s.dash ? ' stroke-dasharray="7 6"' : ''}/>${heads ? `<path d="${heads}"/>` : ''}`;
+    }).join('');
+    out.push(`<svg class="wires" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${paths}</svg>`);
+    for (const s of sh) if (s.k === 'text' && s.of && ls.some((l) => l.id === s.of)) { const bb = bounds(s); out.push(`<div class="t wire-lbl" style="left:${n1(bb.x)}px;top:${n1(bb.y)}px;white-space:nowrap">${lines(s.s)}</div>`); }
   }
   return `<section class="frame" data-i="${fi + 1}" data-w="${w}" data-h="${h}" data-phone="${f.device === 'phone' ? 1 : 0}" aria-label="Screen ${fi + 1}${f.caption ? ': ' + esc(f.caption) : ''}" style="width:${w}px;height:${h}px">${out.join('')}</section>`;
 }
@@ -143,6 +157,7 @@ const CSS = `
 .avatar{border-radius:50%;background:var(--side);color:var(--mute);overflow:hidden}
 .dot{border-radius:50%;background:var(--accent)}
 .img{background:linear-gradient(135deg,var(--side),var(--line));border-radius:calc(var(--r) * .7);color:var(--mute);display:flex;align-items:center;justify-content:center;overflow:hidden}.img img{width:100%;height:100%;object-fit:cover}.img .ph{width:34%;max-width:96px}
+.wires{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}.wires path{fill:none;stroke:var(--mute);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.wire-lbl{font-size:12px;color:var(--mute);background:var(--bg);padding:0 3px}
 .term{margin:0;background:#1e1e1e;color:#e6e6e6;font:13px/18px ui-monospace,Menlo,Consolas,monospace;padding:10px;box-sizing:border-box;overflow:hidden;white-space:pre;border-radius:4px}.para{color:var(--ink);font-size:15px;line-height:24px;overflow:hidden}.para span{display:block;width:100%;white-space:pre-wrap}
 .skel b{display:block;height:9px;border-radius:5px;margin:0 0 11px;background:linear-gradient(90deg,var(--line) 25%,var(--side) 50%,var(--line) 75%);background-size:200% 100%;animation:sh 1.6s linear infinite}
 @keyframes sh{to{background-position:-200% 0}}

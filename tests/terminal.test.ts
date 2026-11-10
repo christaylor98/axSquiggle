@@ -34,7 +34,7 @@ describe('terminal element', () => {
 
   it('survives save and load, and exports as monospace (SVG, Excalidraw, Markdown, preview)', () => {
     const b = board();
-    expect(term(fromRawJSON(toRawJSON(b)))).toMatchObject({ mono: true, s: SESSION });
+    expect(term(fromRawJSON(toRawJSON(b))!)).toMatchObject({ mono: true, s: SESSION });
     const svg = frameSVG(b.frames[0]);
     expect(svg).toContain('monospace');
     expect(svg).toContain('xml:space="preserve"');

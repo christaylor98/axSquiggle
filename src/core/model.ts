@@ -1,4 +1,4 @@
-import { LABEL_J, LABEL_V, type LabelJ, type LabelV } from './types';
+import { LABEL_J, LABEL_V, type LabelJ, type LabelV , TONES } from './types';
 import { cloneBoard, DEVICES, newFrame, newId, type Board, type Device, type Frame, type Note, type Part, type Shape } from './types';
 import { classify, smartSize } from './semantics';
 import { buildFromText } from './layout';
@@ -24,6 +24,8 @@ export function validateShape(v: unknown): Shape | null {
       const lk = linkOf(o.link); if (lk) (sh as { link?: string }).link = lk;
       if (o.k === 'rect' && o.grp === true) (sh as { grp?: boolean }).grp = true;
       if (o.k === 'rect' && o.sm === true) (sh as { sm?: boolean }).sm = true;
+      if (o.k === 'rect' && o.dg === true) (sh as { dg?: boolean }).dg = true;
+      if (o.k === 'rect' && typeof o.tone === 'string' && (TONES as readonly string[]).includes(o.tone)) (sh as { tone?: string }).tone = o.tone;
       if ((o.k === 'rect' || o.k === 'ell') && typeof o.role === 'string' && (ROLES as readonly string[]).includes(o.role)) (sh as { role?: string }).role = o.role;
       const rt = num(o.rot); if (rt && Math.abs(rt) < 360) (sh as { rot?: number }).rot = Math.round(rt * 100) / 100;
       if (o.k === 'img' && typeof o.src === 'string' && /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(o.src) && o.src.length <= 900000) { (sh as { src?: string }).src = o.src; if (typeof o.fn === 'string' && o.fn) (sh as { fn?: string }).fn = o.fn.slice(0, 120); }
@@ -50,6 +52,7 @@ export function validateShape(v: unknown): Shape | null {
       const ln: Shape = o.arrow === true ? { k: 'line', x1, y1, x2, y2, arrow: true } : { k: 'line', x1, y1, x2, y2 };
       if (okVia) (ln as { via?: number[][] }).via = okVia;
       if (o.tail === true) (ln as { tail?: boolean }).tail = true;
+      if (o.dash === true) (ln as { dash?: boolean }).dash = true;
       if (o.conn === true) (ln as { conn?: boolean }).conn = true;
       if (typeof o.id === 'string' && /^[\w-]{1,24}$/.test(o.id)) (ln as { id?: string }).id = o.id;
       if (typeof o.hop === 'boolean') (ln as { hop?: boolean }).hop = o.hop;

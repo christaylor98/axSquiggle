@@ -510,7 +510,7 @@ describe('ghost hints in inputs', () => {
     const all = slashMatches('', parts as never).map((s) => s.name);
     expect(all.slice(0, 4)).toEqual(['part-0', 'part-1', 'part-2', 'part-3']);
     expect(all).toContain('radio');
-    expect(all.length).toBe(4 + 17);
+    expect(all.length).toBe(4 + 18);
   });
 
   it('draws the hint greyed and italic in SVG', async () => {

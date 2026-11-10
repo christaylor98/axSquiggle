@@ -2,7 +2,7 @@ import { rotatePt, rotOf } from './rotate';
 import { bounds, center, justifyDx, lineLabelSpot, linePts, paragraphDy, PARA_LINE, SUB_PX, textLines, textWidth, wrapText, termLines, TERM_FONT_PX, TERM_LINE, TERM_PAD } from './geom';
 import { classify } from './semantics';
 import { linksOf } from './links';
-import { frameSize, type Board, type Frame, type Pt, type Shape } from './types';
+import { frameSize, TONE_FILL, type Board, type Frame, type Pt, type Shape } from './types';
 import { toRawJSON } from './model';
 
 export const INK = '#1f2328';
@@ -150,7 +150,7 @@ export function shapeSVG(s: Shape, font: string, hops?: Hop[]): string {
 
 function shapeSVGRaw(s: Shape, font: string, hops?: Hop[]): string {
   switch (s.k) {
-    case 'rect': return `<rect x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" rx="3" ${STROKE}/>`;
+    case 'rect': return `<rect x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" rx="3" ${s.tone ? STROKE.replace('fill="none"', `fill="${TONE_FILL[s.tone]}"`) : STROKE}/>`;
     case 'ell': return `<ellipse cx="${n1(s.x + s.w / 2)}" cy="${n1(s.y + s.h / 2)}" rx="${n1(s.w / 2)}" ry="${n1(s.h / 2)}" ${STROKE}/>`;
     case 'img': if (s.src) return `<svg x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" viewBox="0 0 ${n1(s.w)} ${n1(s.h)}" preserveAspectRatio="xMidYMid slice"><image href="${s.src}" width="${n1(s.w)}" height="${n1(s.h)}" preserveAspectRatio="xMidYMid slice"/></svg><rect x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" rx="3" ${STROKE}/>`;
       return `<rect x="${n1(s.x)}" y="${n1(s.y)}" width="${n1(s.w)}" height="${n1(s.h)}" rx="3" ${STROKE}/><path d="M${n1(s.x)} ${n1(s.y)}L${n1(s.x + s.w)} ${n1(s.y + s.h)}M${n1(s.x + s.w)} ${n1(s.y)}L${n1(s.x)} ${n1(s.y + s.h)}" ${STROKE}/>`;
@@ -171,6 +171,7 @@ function shapeSVGRaw(s: Shape, font: string, hops?: Hop[]): string {
       let d = lineD(s, hops);
       if (s.arrow) { const pv = lp[lp.length - 2]; const [ax, ay, bx, by] = arrowHead(pv.x, pv.y, s.x2, s.y2); d += `M${n1(ax)} ${n1(ay)}L${n1(s.x2)} ${n1(s.y2)}L${n1(bx)} ${n1(by)}`; }
       if (s.tail) { const nx = lp[1]; const [ax, ay, bx, by] = arrowHead(nx.x, nx.y, s.x1, s.y1); d += `M${n1(ax)} ${n1(ay)}L${n1(s.x1)} ${n1(s.y1)}L${n1(bx)} ${n1(by)}`; }
+      if (s.dash) return `<path d="${lineD(s, hops)}" ${STROKE} stroke-dasharray="7 6"/><path d="${d.slice(lineD(s, hops).length)}" ${STROKE}/>`;
       return `<path d="${d}" ${STROKE}/>`;
     }
     case 'text': return textLines(s.s, s.wrap, s.al).map((l) => `<text x="${n1(s.x + (l.dx ?? 0))}" y="${n1(s.y + l.dy)}" font-family="${esc(font)}" font-size="${l.sub ? SUB_PX : 18}"${s.ghost ? ' font-style="italic"' : ''} fill="${l.sub || s.ghost ? '#868e96' : INK}">${esc(l.text)}</text>`).join('');

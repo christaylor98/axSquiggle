@@ -348,6 +348,8 @@ export function smartSize(frame: Frame, fixed: number | null = null): Frame {
   const f = cloneFrame(frame);
   const { w: W } = frameSize(f);
   const phone = f.device === 'phone';
+  // Diagram boxes are placed with their routed arrows: sizing them here would close the gaps the arrows run through.
+  const dgBoxes = f.shapes.map((s) => (s.k === 'rect' && s.dg ? { x: s.x, y: s.y, w: s.w, h: s.h } : null));
   const c = classify(f);
   const rectOf = (i: number) => f.shapes[i] as Extract<Frame['shapes'][number], { k: 'rect' }>;
   const lbl = (e: El) => (e.labelIdx !== null ? (f.shapes[e.labelIdx] as { s: string }) : null);
@@ -505,5 +507,6 @@ export function smartSize(frame: Frame, fixed: number | null = null): Frame {
   const { h: baseH } = DEVICES[f.device];
   const bottom = f.shapes.reduce((m, sh) => { const b = bounds(sh); return Math.max(m, b.y + b.h); }, 0) + GRID;
   if (bottom > baseH) f.h = Math.ceil(bottom / GRID) * GRID; else delete f.h;
+  dgBoxes.forEach((b, i) => { const r = f.shapes[i]; if (b && r.k === 'rect') Object.assign(r, b); });
   return f;
 }
