@@ -268,20 +268,21 @@ export function diffBoards(base: Board, cur: Board): string[] {
 
 export interface ReviewPacket {
   text: string;
-  openNotes: { id: string; frame: number; text: string; about: string[]; region: number[]; targets: string[] }[];
+  openNotes: { id: string; frame: number; text: string; about: string[]; region: number[]; targets: string[]; at?: number }[];
   changes: string[];
 }
 
 /** What the AI fetches to see the review: open review notes (with the elements they point at), what the person changed since the AI's draft, and the board. */
 export function reviewPacket(b: Board, baseline: Board | null, rev: number): ReviewPacket {
   const openNotes: ReviewPacket['openNotes'] = [];
-  b.frames.forEach((f, fi) => f.notes.filter((n) => !n.done).forEach((n) => openNotes.push({ id: n.id, frame: fi + 1, text: n.text, about: n.about, region: n.box, targets: noteTargets(f, n.box) })));
+  b.frames.forEach((f, fi) => f.notes.filter((n) => !n.done).forEach((n) => openNotes.push({ id: n.id, frame: fi + 1, text: n.text, about: n.about, region: n.box, targets: noteTargets(f, n.box), at: n.at })));
   const changes = baseline ? diffBoards(baseline, b) : [];
   const lines = [`REVIEW (board rev ${rev})`];
-  lines.push('', `Open review notes: ${openNotes.length}`);
+  const times = openNotes.map((n) => n.at).filter((t): t is number => typeof t === 'number');
+  lines.push('', `Open review notes: ${openNotes.length}${times.length ? ` (written ${clock(Math.min(...times))} to ${clock(Math.max(...times))})` : ''}`);
   for (const n of openNotes) {
     const f = b.frames[n.frame - 1];
-    lines.push(`- [${n.id}] frame ${n.frame}${f.caption ? ` "${f.caption}"` : ''}: ${n.text}`);
+    lines.push(`- [${n.id}] frame ${n.frame}${f.caption ? ` "${f.caption}"` : ''}${n.at ? ` (${clock(n.at)})` : ''}: ${n.text}`);
     if (n.targets.length) lines.push(`    points at: ${n.targets.join('; ')}`);
     else if (n.about.length) lines.push(`    about: ${n.about.join('; ')}`);
   }
@@ -290,6 +291,9 @@ export function reviewPacket(b: Board, baseline: Board | null, rev: number): Rev
   lines.push('', 'Action each note with the editing tools, then call resolve_notes with the ids (add a short reply saying what you did).', '', describeBoard(b, rev));
   return { text: lines.join('\n'), openNotes, changes };
 }
+
+/** Local wall-clock time of a note, HH:MM:SS, with the date: the agent's attention clock reads these. */
+const clock = (t: number) => { const d = new Date(t), p = (n: number) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
 
 export function addNote(b: Board, ref: FrameRef, text: string, about: string[] = ['AI']): string {
   const f = b.frames[needFrame(b, ref)];
@@ -302,7 +306,7 @@ export function resolveNotes(b: Board, ids: string[], reply?: string, done = tru
   let n = 0;
   for (const f of b.frames) for (const note of f.notes) {
     if (!ids.includes(note.id)) continue;
-    if (done) note.done = true; else delete note.done;
+    if (done) { note.done = true; note.doneAt = Date.now(); } else { delete note.done; delete note.doneAt; }
     if (reply) note.reply = reply.slice(0, 500);
     n++;
   }

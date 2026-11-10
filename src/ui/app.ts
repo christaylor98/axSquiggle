@@ -841,7 +841,7 @@ export function startApp() {
       li.append(txt);
       const tick = document.createElement('button');
       tick.textContent = n.done ? '↺' : '✓'; tick.title = n.done ? 'Reopen this note' : 'Mark as done'; tick.setAttribute('aria-label', tick.title);
-      tick.onclick = () => store.mutate((fr) => { const t = fr.notes[i]; if (t.done) delete t.done; else t.done = true; });
+      tick.onclick = () => store.mutate((fr) => { const t = fr.notes[i]; if (t.done) { delete t.done; delete t.doneAt; } else { t.done = true; t.doneAt = Date.now(); } });
       li.append(tick);
       const x = document.createElement('button'); x.textContent = '×'; x.title = 'Delete note'; x.setAttribute('aria-label', 'Delete note');
       x.onclick = () => store.mutate((fr) => { fr.notes.splice(i, 1); });

@@ -34,8 +34,10 @@ export const DEVICES: Record<Device, { w: number; h: number }> = {
 };
 
 /** A review comment. `done` marks it as actioned (by a person or by an AI working through the review). */
-export interface Note { id: string; text: string; box: [number, number, number, number]; about: string[]; done?: boolean; reply?: string }
-export const newNote = (text: string, box: Note['box'], about: string[]): Note => ({ id: newId('n'), text, box, about });
+/** A review note. `at` is when it was written and `doneAt` when it was ticked off (ms since epoch): together they time the
+ * person's attention on a board. */
+export interface Note { id: string; text: string; box: [number, number, number, number]; about: string[]; done?: boolean; reply?: string; at?: number; doneAt?: number }
+export const newNote = (text: string, box: Note['box'], about: string[]): Note => ({ id: newId('n'), text, box, about, at: Date.now() });
 
 export interface Frame {
   id: string;

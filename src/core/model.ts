@@ -97,6 +97,8 @@ function validateNote(v: unknown): Note | null {
   const n: Note = { id: linkOf(o.id) ?? newId('n'), text: o.text.slice(0, 2000), box: box as Note['box'], about };
   if (o.done === true) n.done = true;
   if (typeof o.reply === 'string' && o.reply) n.reply = o.reply.slice(0, 500);
+  if (typeof o.at === 'number' && Number.isFinite(o.at)) n.at = o.at;
+  if (typeof o.doneAt === 'number' && Number.isFinite(o.doneAt)) n.doneAt = o.doneAt;
   return n;
 }
 
