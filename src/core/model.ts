@@ -1,3 +1,4 @@
+import type { KnobChange } from './choice';
 import { LABEL_J, LABEL_V, type LabelJ, type LabelV , TONES } from './types';
 import { cloneBoard, DEVICES, newFrame, newId, type Board, type Device, type Frame, type Note, type Part, type Shape } from './types';
 import { classify, smartSize } from './semantics';
@@ -26,6 +27,7 @@ export function validateShape(v: unknown): Shape | null {
       if (o.k === 'rect' && o.sm === true) (sh as { sm?: boolean }).sm = true;
       if (o.k === 'rect' && o.dg === true) (sh as { dg?: boolean }).dg = true;
       if (o.k === 'rect' && typeof o.legend === 'string' && o.legend) (sh as { legend?: string }).legend = o.legend.slice(0, 160);
+      if (o.k === 'rect' && typeof o.choice === 'string' && o.choice && typeof o.opt === 'string') { Object.assign(sh, { choice: o.choice.slice(0, 200), opt: o.opt.slice(0, 120) }); if (o.on === true) (sh as { on?: boolean }).on = true; }
       if (o.k === 'rect' && typeof o.tone === 'string' && (TONES as readonly string[]).includes(o.tone)) (sh as { tone?: string }).tone = o.tone;
       if ((o.k === 'rect' || o.k === 'ell') && typeof o.role === 'string' && (ROLES as readonly string[]).includes(o.role)) (sh as { role?: string }).role = o.role;
       const rt = num(o.rot); if (rt && Math.abs(rt) < 360) (sh as { rot?: number }).rot = Math.round(rt * 100) / 100;
@@ -128,6 +130,12 @@ export function validateBoard(v: unknown): Board | null {
   if ((src as { example?: unknown }).example === true) out.example = true;
   const parts = validateParts((src as { parts?: unknown }).parts);
   if (parts) out.parts = parts;
+  const log = (src as { knobLog?: unknown }).knobLog;
+  if (Array.isArray(log)) {
+    const ok = log.filter((c): c is KnobChange => !!c && typeof c === 'object' && typeof (c as KnobChange).at === 'number' && typeof (c as KnobChange).q === 'string' && typeof (c as KnobChange).to === 'string' && typeof (c as KnobChange).frame === 'string')
+      .slice(-500).map((c) => ({ at: c.at, frame: c.frame, q: c.q.slice(0, 200), from: typeof c.from === 'string' ? c.from.slice(0, 120) : null, to: c.to.slice(0, 120), by: c.by === 'AI' ? 'AI' as const : 'person' as const }));
+    if (ok.length) out.knobLog = ok;
+  }
   return out;
 }
 

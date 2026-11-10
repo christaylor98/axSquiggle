@@ -1,3 +1,4 @@
+import { knobsOf } from './choice';
 import { duration } from './attention';
 import { bounds, interArea, area } from './geom';
 import { convertElement, buildFromText, KEYWORDS, parseCell, setHint, setLabel, deleteElement, MIN_H, MAX_H } from './layout';
@@ -258,6 +259,8 @@ export function diffBoards(base: Board, cur: Board): string[] {
     }
     for (const x of added) out.push(`${tag}: added ${x.e.role}${x.e.label ? ` "${x.e.label}"` : ''} at (${Math.round(x.b.x)},${Math.round(x.b.y)})`);
     for (const y of left) out.push(`${tag}: removed ${y.e.role}${y.e.label ? ` "${y.e.label}"` : ''}`);
+    const oldK = new Map(knobsOf(old).map((k) => [k.q, k.on]));
+    for (const k of knobsOf(f)) { const was = oldK.get(k.q); if (was !== undefined && was !== k.on) out.push(`${tag}: knob "${k.q}" set to "${k.on}" (was "${was}")`); }
     const oldN = new Map(old.notes.map((n) => [n.id, n]));
     for (const n of f.notes) { const o = oldN.get(n.id); if (!o) out.push(`${tag}: new note [${n.id}] "${n.text}"`); else if (!!o.done !== !!n.done) out.push(`${tag}: note [${n.id}] ${n.done ? 'marked done' : 'reopened'}`); }
     for (const n of old.notes) if (!f.notes.some((x) => x.id === n.id)) out.push(`${tag}: note [${n.id}] deleted`);
@@ -288,6 +291,12 @@ export function reviewPacket(b: Board, baseline: Board | null, rev: number, attn
     if (n.targets.length) lines.push(`    points at: ${n.targets.join('; ')}`);
     else if (n.about.length) lines.push(`    about: ${n.about.join('; ')}`);
   }
+  const kn = b.frames.flatMap((f, fi) => knobsOf(f).map((k) => `- frame ${fi + 1}: ${k.q} = ${k.on ?? '(none)'}`));
+  if (kn.length) {
+    lines.push('', 'Knobs now (the person sets them by clicking; act on a note asking to change them with set_choice):', ...kn);
+    const log = (b.knobLog ?? []).slice(-8);
+    if (log.length) lines.push('Recent knob changes:', ...log.map((c) => `- ${clock(c.at)} ${c.by}: ${c.q}: ${c.from ?? '(none)'} -> ${c.to}`));
+  }
   lines.push('', baseline ? `Changes the person made since your last write (${changes.length}):` : 'No baseline (you have not written to this board yet).');
   for (const c of changes) lines.push(`- ${c}`);
   lines.push('', 'Action each note with the editing tools, then call resolve_notes with the ids (add a short reply saying what you did).', '', describeBoard(b, rev));
@@ -295,7 +304,7 @@ export function reviewPacket(b: Board, baseline: Board | null, rev: number, attn
 }
 
 /** Local wall-clock time of a note, HH:MM:SS, with the date: the agent's attention clock reads these. */
-const clock = (t: number) => { const d = new Date(t), p = (n: number) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
+export const clock = (t: number) => { const d = new Date(t), p = (n: number) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
 
 export function addNote(b: Board, ref: FrameRef, text: string, about: string[] = ['AI']): string {
   const f = b.frames[needFrame(b, ref)];

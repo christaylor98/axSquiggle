@@ -1,3 +1,4 @@
+import { choiceAt, choose } from '../core/choice';
 import { AttentionMeter, TICK_MS } from '../core/attention';
 import { bbox, bounds, center, linePts, lineLabelSpot, pathLen, pointInPoly, setTextMeasurer, snapTo, textBlock, type Box } from '../core/geom';
 import { ATTACH_NEAR, connect, endsOf, nearestTarget } from '../core/connect';
@@ -232,6 +233,9 @@ export function startApp() {
     e.preventDefault();
     cv.setPointerCapture(e.pointerId);
     const p = pt(e), f = store.frame;
+    // A knob (an option of a question): one click turns it on, in any mode but drawing; Shift still selects it.
+    const ci = !e.shiftKey && (play || st.tool === 'select' || st.tool === 'flow') ? choiceAt(f, p) : null;
+    if (ci !== null) { store.mutate((_f, b) => { const c = choose(b, st.cur, ci, 'person'); if (c) toast(`${c.q}: ${c.to}`); }); return; }
     if (play) {
       const i = linkAt(f, p), target = i === null ? undefined : st.board.frames.findIndex((x) => x.id === (f.shapes[i] as { link: string }).link);
       if (target !== undefined && target >= 0) { playBack.push(f.id); store.setCur(target); }

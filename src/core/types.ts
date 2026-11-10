@@ -13,7 +13,7 @@ export const TONES: readonly Tone[] = ['hot', 'warm', 'cold', 'green', 'amber', 
 export const TONE_FILL: Record<Tone, string> = { hot: '#ffc078', warm: '#ffe8cc', cold: '#e9ecef', green: '#b2f2bb', amber: '#ffec99', red: '#ffc9c9' };
 
 export type Shape =
-  | { k: 'rect'; x: number; y: number; w: number; h: number; link?: string; grp?: boolean; role?: Role; sm?: boolean; rot?: number; lbl?: LabelV; lj?: LabelJ; id?: string; tone?: Tone; dg?: boolean; legend?: string } // dg: a diagram box, laid out with its arrows; auto-sizing leaves it alone. legend: a group border's title, drawn in its top line // grp: an auto-fitted border around a group; sm: a compact (toolbar) button
+  | { k: 'rect'; x: number; y: number; w: number; h: number; link?: string; grp?: boolean; role?: Role; sm?: boolean; rot?: number; lbl?: LabelV; lj?: LabelJ; id?: string; tone?: Tone; dg?: boolean; legend?: string; choice?: string; opt?: string; on?: boolean } // choice/opt/on: an option button of a question (choice.ts) // dg: a diagram box, laid out with its arrows; auto-sizing leaves it alone. legend: a group border's title, drawn in its top line // grp: an auto-fitted border around a group; sm: a compact (toolbar) button
   | { k: 'ell'; x: number; y: number; w: number; h: number; link?: string; role?: Role; rot?: number; lbl?: LabelV; lj?: LabelJ; id?: string }
   | { k: 'img'; x: number; y: number; w: number; h: number; link?: string; rot?: number; src?: string; fn?: string; id?: string } // src: data URL of a picture to show in it (otherwise the crossed placeholder); its description is the text underneath
   | { k: 'tlines'; x: number; y: number; w: number; h: number; s?: string; link?: string; rot?: number; al?: 'center' | 'right'; av?: 'middle' | 'bottom'; mono?: boolean } // s: paragraph copy; absent = grey placeholder lines. mono: a terminal block (monospace lines kept as typed, dark background)
@@ -53,7 +53,7 @@ export interface Frame {
 /** A reusable group of shapes, stored relative to its own top-left corner. */
 export interface Part { w: number; h: number; shapes: Shape[]; /** one line saying what it is for */ note?: string }
 
-export interface Board { frames: Frame[]; example?: boolean; parts?: Record<string, Part> }
+export interface Board { frames: Frame[]; example?: boolean; parts?: Record<string, Part>; knobLog?: import('./choice').KnobChange[] }
 
 export type Role =
   | 'Checkbox' | 'Header' | 'List item' | 'Sidebar' | 'Button' | 'Input' | 'Card'

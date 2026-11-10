@@ -1,3 +1,4 @@
+import { setChoice } from '../src/core/choice';
 import { z } from 'zod';
 import {
   addNote, applyOutline, deleteFrameAt, describeBoard, duplicateFrameAt, moveFrameTo, describeFrame, draftBoard, editElement, findFrame, frameImages, frameSvgText, resolveNotes, reviewPacket,
@@ -29,7 +30,7 @@ export const OUTLINE_HELP =
   'Separate cells on one line with "|" to lay them side by side (button Save | button Cancel). Indent children under a card/header line to nest them. ' +
   'An input can carry ghost placeholder text: input Email "you@example.com" (or indent a plain line under it). Add "-> N" (frame number) or "-> caption words" to make an element lead to another frame (button Sign in -> 2). ' +
   '"toolbar Find | All keys | Flow F" makes a compact row of small buttons sized to their labels (use it for toolbars; "button A | button B" makes big equal-width buttons). ' +
-  '"tabs Day | Week | Month" (also "segmented") is a button group whose buttons touch. "dropdown Country \\"Pick one\\"" is a dropdown list, "search" a search box, "badge New" a small pill. ' +
+  '"choose How long can it take? | instant | seconds | *don\'t care" is a question whose options the person clicks (* = on; read them in get_review, set them with set_choice). "tabs Day | Week | Month" (also "segmented") is a button group whose buttons touch. "dropdown Country \\"Pick one\\"" is a dropdown list, "search" a search box, "badge New" a small pill. ' +
   '"columns" puts its indented children side by side ("columns 1:3" sets the width ratio), e.g. columns 1:3 / card Menu / (its list items) / card Content / (its text). ' +
   '"image Cockpit view {h=320}" (also on card) sets its height in pixels (default 160, phone 140). ' +
   'Frames grow taller by themselves when the content is long, so do not worry about running past 600px. Indented plain text under a radio, checkbox or list item is its sub-label.';
@@ -160,6 +161,17 @@ const BASE: Tool[] = [
     description: 'Move a frame to another position (1 = first). Links between frames keep working.',
     shape: { frame: frameRef, to: z.number().int().min(1), expected_rev: rev },
     run: async (s, a) => { let m = ''; s.aiWrite((b) => { m = moveFrameTo(b, a.frame as FrameRef, a.to as number); }, a.expected_rev as number | undefined); return tell(s, m); },
+  },
+  {
+    name: 'set_choice',
+    description: 'Turn a knob: on a question made with "choose Question | a | b | *c", turn on the option whose text contains `option`. Use it when the person asks in a note, e.g. "more focus on speed": set the matching knobs and reply on the note. Logged as an AI change.',
+    shape: { frame: frameRef, question: z.string().describe('Words from the question'), option: z.string().describe('Words from the option to turn on'), expected_rev: rev },
+    run: async (s, a) => {
+      let m = '';
+      s.aiWrite((b) => { const fi = frameNo(s, a.frame as FrameRef); if (fi < 0) throw new Error(`No frame ${String(a.frame)}`);
+        const c = setChoice(b, fi, String(a.question), String(a.option), 'AI'); m = c ? `${c.q}: ${c.from ?? '(none)'} -> ${c.to}` : 'Already set.'; }, a.expected_rev as number | undefined);
+      return tell(s, m);
+    },
   },
   {
     name: 'add_note',

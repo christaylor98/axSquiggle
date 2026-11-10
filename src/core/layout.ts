@@ -4,7 +4,7 @@ export { borderFor, GROUP_PAD, refitBorders };
 import { cloneFrame, cloneShape, frameSize, GRID, newId, type Frame, type Part, type Shape } from './types';
 import { buildDiagram } from './diagram';
 
-export type Kind = 'button' | 'input' | 'text' | 'card' | 'image' | 'paragraph' | 'divider' | 'avatar' | 'radio' | 'checkbox' | 'header' | 'list' | 'columns' | 'toolbar' | 'dropdown' | 'search' | 'segmented' | 'badge' | 'terminal' | 'diagram';
+export type Kind = 'choose' | 'button' | 'input' | 'text' | 'card' | 'image' | 'paragraph' | 'divider' | 'avatar' | 'radio' | 'checkbox' | 'header' | 'list' | 'columns' | 'toolbar' | 'dropdown' | 'search' | 'segmented' | 'badge' | 'terminal' | 'diagram';
 
 export const KEYWORDS: Record<string, Kind> = {
   button: 'button', input: 'input', text: 'text', h1: 'text', card: 'card', section: 'card',
@@ -14,11 +14,12 @@ export const KEYWORDS: Record<string, Kind> = {
   toolbar: 'toolbar', tools: 'toolbar',
   dropdown: 'dropdown', select: 'dropdown', search: 'search',
   diagram: 'diagram', terminal: 'terminal', term: 'terminal', console: 'terminal', shell: 'terminal',
+  choose: 'choose', choice: 'choose', knob: 'choose',
   segmented: 'segmented', seg: 'segmented', tabs: 'segmented', btngroup: 'segmented', badge: 'badge', tag: 'badge', chip: 'badge',
 };
 
 export const ROLE_OF_KIND: Record<Kind, string> = {
-  button: 'Button', input: 'Input', text: 'Text', card: 'Card', image: 'Image', paragraph: 'Paragraph',
+  choose: 'Button', button: 'Button', input: 'Input', text: 'Text', card: 'Card', image: 'Image', paragraph: 'Paragraph',
   divider: 'Divider', avatar: 'Avatar', radio: 'Radio', checkbox: 'Checkbox', header: 'Header', list: 'List item', columns: 'Card', toolbar: 'Button',
   dropdown: 'Input', search: 'Input', segmented: 'Button', badge: 'Button', terminal: 'Terminal', diagram: 'Card',
 };
@@ -127,7 +128,7 @@ export function makeElement(kind: Kind, label: string, x: number, y: number, w: 
     case 'checkbox': return { shapes: [{ k: 'rect', x, y: y + 2, w: 20, h: 20, role: 'Checkbox' }, ...(label ? [t(label, x + 28, y + 17)] : [])], h: labelH(label, 24), py: 2 };
     case 'header': return { shapes: [{ k: 'rect', x, y, w, h: 56, role: 'Header' }, ...(label ? [t(label, x + PAD, y + 34)] : [])], h: 56, py: 0 };
     case 'badge': { const text = label || 'Tag', bw = Math.max(36, Math.ceil(textWidth(text) + 20)); return { shapes: [{ k: 'rect', x, y, w: bw, h: 28, role: 'Button', sm: true }, t(text, x + 10, y + 20)], h: 28, py: 0 }; }
-    case 'columns': case 'toolbar': case 'segmented': return { shapes: [], h: 0, py: 0 }; // layout instructions, handled by layoutNodes
+    case 'columns': case 'toolbar': case 'segmented': case 'choose': return { shapes: [], h: 0, py: 0 }; // layout instructions, handled by layoutNodes
     case 'list': { const h = Math.max(56, labelH(label, 0) + 26); return { shapes: [{ k: 'rect', x, y, w, h, role: 'List item' }, ...(label ? [t(label, x + PAD, y + 34)] : [])], h, py: 0 }; }
   }
 }
@@ -173,6 +174,26 @@ function layoutNodes(nodes: Node[], x: number, y: number, w: number, ctx: Ctx, g
     if (ni > 0) cy += gap;
     const only = n.cells.length === 1 && !n.children.length ? n.cells[0].kind : null;
     if (run && only !== run.kind) flush();
+    if (n.cells[0].kind === 'choose') {
+      // "choose Question | a | b | *c": the question, then its options as touching buttons; * marks the one that is on.
+      const parts = n.raw.split('|').map((p, i) => (i === 0 ? p.trim().replace(/^(choose|choice|knob)\b\s*/i, '') : p.trim()));
+      const q = parts[0], opts = parts.slice(1).filter(Boolean);
+      const bh = ctx.phone ? 36 : 28;
+      if (q) { shapes.push(t(q, x, cy + 16)); cy += 26; }
+      let cx = x, line = cy;
+      const prim: number[] = [];
+      opts.forEach((raw) => {
+        const on = raw.startsWith('*'), label = on ? raw.slice(1).trim() : raw;
+        const bw = Math.max(36, Math.ceil(textWidth(label) + 20));
+        if (cx > x && cx + bw > x + w) { cx = x; line += bh + 6; }
+        prim.push(shapes.length);
+        shapes.push({ k: 'rect', x: cx, y: line, w: bw, h: bh, role: 'Button', sm: true, choice: q || 'choice', opt: label, ...(on ? { on: true, tone: 'amber' as const } : {}) }, t(label, cx + 10, line + bh / 2 + 6));
+        cx += bw;
+      });
+      primaries.push(prim);
+      cy = line + bh;
+      return;
+    }
     if (n.cells[0].kind === 'toolbar' || n.cells[0].kind === 'segmented') {
       const seg = n.cells[0].kind === 'segmented';   // a button group: the buttons touch
       // "toolbar Find | All keys | Flow F": compact buttons sized to their labels, in a row that wraps only when it must.
@@ -446,7 +467,12 @@ function reflowRow(f: Frame, el: El, oldText: string, newText: string) {
 export function setLabel(frame: Frame, el: El, text: string): Frame {
   const f = cloneFrame(frame);
   const s = f.shapes[el.i];
-  if (el.role === 'Text' && s.k === 'text') { const old = s.s; s.s = text; reflowRow(f, el, old, text); refitBorders(f); return f; }
+  if (el.role === 'Text' && s.k === 'text') {
+    // A label wider than the room left in the frame wraps onto more lines (what is below moves down), never off the edge.
+    const room = frameSize(f).w - s.x - GRID;
+    const fit = text.split('\n').some((l) => textWidth(l) > room) ? text.split('\n').flatMap((l) => wrapText(l, room)).join('\n') : text;
+    const old = s.s; s.s = fit; reflowRow(f, el, old, fit); refitBorders(f); return f;
+  }
   if (s.k === 'tlines') {
     // Paragraph copy lives on the shape itself; fit its height to the copy and move whatever sits below by the same amount.
     if (text) s.s = text; else delete s.s;
