@@ -73,3 +73,10 @@ export function questionsOf(b: Board): Question[] {
   });
   return out;
 }
+
+/** Turn on exactly the option `opt` of the question `q` (exact texts, as the person clicked them). */
+export function setChoiceExact(b: Board, fi: number, q: string, opt: string, by: KnobChange['by']): KnobChange | null {
+  const idx = b.frames[fi].shapes.findIndex((s) => isOpt(s) && s.choice === q && s.opt === opt);
+  if (idx < 0) throw new Error(`no option "${opt}" for "${q}"`);
+  return choose(b, fi, idx, by);
+}

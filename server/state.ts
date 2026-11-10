@@ -149,6 +149,21 @@ export class BoardServer {
     return msg ?? '';
   }
 
+  /** A person's single answer or note from the browser, applied to the open board as it is now: no base rev, so it can
+   * never be lost to a collision with an AI write (a whole-board PUT can). Counts as the person's change, not the AI's. */
+  personWrite(fn: (b: Board) => void): number {
+    const s = this.slotFor(this.reg.current)!;
+    const draft = cloneBoard(s.board);
+    fn(draft);
+    const ok = validateBoard(JSON.parse(JSON.stringify(draft)));
+    if (!ok) throw new Error('That change would leave the board invalid.');
+    s.board = ok;
+    s.rev = ++this.reg.clock;
+    this.save(s);
+    this.changed(s);
+    return s.rev;
+  }
+
   /** Active time the browser measured on the open board (ms, at most a minute per report). Not an edit: no new rev. */
   addAttention(ms: number): boolean {
     if (!(ms > 0 && ms <= 60_000)) return false;

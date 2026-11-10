@@ -1,3 +1,5 @@
+import { setChoiceExact } from '../src/core/choice';
+import { newNote } from '../src/core/types';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
 import { reviewPacket } from '../src/core/agent';
@@ -104,6 +106,20 @@ export function createHttp(state: BoardServer, opts: HttpOpts): Server {
         await server.connect(transport);
         await transport.handleRequest(req, res, await readBody(req));
         return;
+      }
+      if (req.method === 'POST' && url.pathname === '/api/person') {
+        // One answer or one note from the person (questionnaire, a click on a knob): applied atomically, never lost to a collision.
+        const body = (await readBody(req)) as { op?: string; frame?: string; q?: string; opt?: string; text?: string; box?: number[] };
+        try {
+          const rev = state.personWrite((b) => {
+            const fi = b.frames.findIndex((f) => f.id === body.frame);
+            if (fi < 0) throw new Error('no such frame');
+            if (body.op === 'choose') setChoiceExact(b, fi, String(body.q), String(body.opt), 'person');
+            else if (body.op === 'note' && typeof body.text === 'string' && body.text.trim()) b.frames[fi].notes.push(newNote(body.text.slice(0, 2000), (Array.isArray(body.box) && body.box.length === 4 ? body.box : [40, 40, 0, 0]) as [number, number, number, number], []));
+            else throw new Error('unknown op');
+          });
+          return send(200, { ok: true, rev });
+        } catch (e) { return send(400, { error: (e as Error).message }); }
       }
       if (req.method === 'POST' && url.pathname === '/api/attention') {
         const body = (await readBody(req)) as { ms?: unknown };

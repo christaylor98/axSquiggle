@@ -236,7 +236,7 @@ export function startApp() {
     const p = pt(e), f = store.frame;
     // A knob (an option of a question): one click turns it on, in any mode but drawing; Shift still selects it.
     const ci = !e.shiftKey && (play || st.tool === 'select' || st.tool === 'flow') ? choiceAt(f, p) : null;
-    if (ci !== null) { store.mutate((_f, b) => { const c = choose(b, st.cur, ci, 'person'); if (c) toast(`${c.q}: ${c.to}`); }); return; }
+    if (ci !== null) { void answer(st.cur, ci); return; }
     if (play) {
       const i = linkAt(f, p), target = i === null ? undefined : st.board.frames.findIndex((x) => x.id === (f.shapes[i] as { link: string }).link);
       if (target !== undefined && target >= 0) { playBack.push(f.id); store.setCur(target); }
@@ -1095,6 +1095,15 @@ export function startApp() {
 
   // ---------- AI bridge ----------
   const sync = new Sync(store, toast);
+  /** The person picks an option: through the bridge when there is one (never lost to a collision), else locally. */
+  async function answer(fi: number, idx: number) {
+    const f = st.board.frames[fi], s = f.shapes[idx] as { choice?: string; opt?: string };
+    if (!s?.choice || s.opt === undefined) return;
+    const sent = await sync.person({ op: 'choose', frame: f.id, q: s.choice, opt: s.opt });
+    if (!sent) store.mutate((_f, b) => { choose(b, fi, idx, 'person'); });
+    toast(`${s.choice}: ${s.opt}`);
+  }
+
   // ---------- Questionnaire mode: every question on the board, one at a time ----------
   let qi = 0;
   const quiz = $<HTMLDialogElement>('dQuiz');
@@ -1114,7 +1123,7 @@ export function startApp() {
     const box = $('quizOpts'); box.replaceChildren();
     for (const o of q.options) {
       const b = document.createElement('button'); b.type = 'button'; b.textContent = o.opt; if (o.on) b.classList.add('on');
-      b.onclick = () => { store.mutate((_f, bd) => { choose(bd, q.fi, o.idx, 'person'); }); paintQuiz(); };
+      b.onclick = () => { void answer(q.fi, o.idx).then(paintQuiz); };
       box.append(b);
     }
     $<HTMLButtonElement>('quizBack').disabled = qi === 0;
@@ -1123,7 +1132,9 @@ export function startApp() {
   const quizNote = () => {
     const t = $<HTMLTextAreaElement>('quizNote'), text = t.value.trim(); t.value = '';
     const q = questionsOf(st.board)[qi];
-    if (text && q) store.mutate((_f, bd) => { bd.frames[q.fi].notes.push(newNote(`${q.q} — ${text}`, q.at, [])); });
+    if (!text || !q) return;
+    const t2 = `${q.q} — ${text}`, fid = st.board.frames[q.fi].id;
+    void sync.person({ op: 'note', frame: fid, text: t2, box: q.at }).then((sent) => { if (!sent) store.mutate((_f, bd) => { const f = bd.frames.find((x) => x.id === fid); if (f) f.notes.push(newNote(t2, q.at, [])); }); });
   };
   const openQuiz = (start = 0) => { qi = start; if (!questionsOf(st.board).length) { toast('No questions on this board'); return; } paintQuiz(); quiz.showModal(); };
   $('bQuiz').onclick = () => openQuiz();

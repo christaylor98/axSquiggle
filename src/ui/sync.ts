@@ -129,6 +129,16 @@ export class Sync {
   /** Report the person's active time on the open board (attention clock). Quietly dropped when the bridge is not there. */
   attention(ms: number) { if (this.state === 'on' && ms > 0) void this.api('/api/attention', { ms }).catch(() => {}); }
 
+  /** One answer or note from the person, sent on its own so it cannot collide with an AI write; then take the board.
+   * Returns false when there is no bridge (the caller then makes the change locally). */
+  async person(op: { op: 'choose' | 'note'; frame: string; q?: string; opt?: string; text?: string; box?: number[] }): Promise<boolean> {
+    if (this.state !== 'on' || !this.config) return false;
+    await this.flush();
+    try { await this.api('/api/person', op); } catch (e) { this.toast(`Could not send your answer: ${(e as Error).message}`); return true; }
+    await this.pull('');
+    return true;
+  }
+
   /** The boards the bridge holds. */
   boards() { return this.api<{ open: string; boards: { name: string; frames: number; changed: number; open: boolean }[] }>('/api/boards'); }
   /** Open a board (or make a new one when `create`); the browser then pulls it like any other change. */
@@ -149,7 +159,7 @@ export class Sync {
     const another = (j.name ?? '') !== this.name;
     this.name = j.name ?? '';
     this.adopt(validateBoard(j.board), another);
-    this.toast(another ? `Opened board "${this.name}"` : message);
+    if (another || message) this.toast(another ? `Opened board "${this.name}"` : message);
     this.onChange();
   }
 
