@@ -1,3 +1,4 @@
+import { AttentionMeter, TICK_MS } from '../core/attention';
 import { bbox, bounds, center, linePts, lineLabelSpot, pathLen, pointInPoly, setTextMeasurer, snapTo, textBlock, type Box } from '../core/geom';
 import { ATTACH_NEAR, connect, endsOf, nearestTarget } from '../core/connect';
 import { searchBoard, type Hit } from '../core/search';
@@ -1089,6 +1090,15 @@ export function startApp() {
 
   // ---------- AI bridge ----------
   const sync = new Sync(store, toast);
+  // Attention clock: count only time the board is on screen, focused and touched within a minute; report it to the bridge.
+  const meter = new AttentionMeter();
+  const touched = () => meter.input(Date.now());
+  for (const ev of ['pointermove', 'pointerdown', 'keydown', 'wheel', 'scroll', 'focus']) window.addEventListener(ev, touched, { passive: true, capture: true });
+  let ticks = 0;
+  setInterval(() => {
+    meter.tick(Date.now(), document.visibilityState === 'visible', document.hasFocus());
+    if (++ticks % 6 === 0) sync.attention(meter.take());
+  }, TICK_MS);
   const paintSync = () => {
     $('bAi').classList.toggle('on', sync.state === 'on');
     $('bAi').classList.toggle('err', sync.state === 'error');

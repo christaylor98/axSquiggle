@@ -57,6 +57,7 @@ function hostAllowed(host: string | undefined, extra: string[]): boolean {
  *   GET  /api/export/preview   -> the realistic preview page (?style=clean|material|dark|brand|minimal)
  *   GET  /api/boards           -> { open, boards: [{ name, frames, rev, changed, open }] }
  *   PUT  /api/board            { board, baseRev } -> { ok, rev } or 409 { rev }
+ *   POST /api/attention        { ms } -> the person's active time on the open board (no new rev)
  *   GET  /api/review           -> the review packet as text
  *   GET  /api/export/prototype -> the board as a click-through HTML prototype
  *   GET  /api/events           server-sent events: board
@@ -104,6 +105,10 @@ export function createHttp(state: BoardServer, opts: HttpOpts): Server {
         await transport.handleRequest(req, res, await readBody(req));
         return;
       }
+      if (req.method === 'POST' && url.pathname === '/api/attention') {
+        const body = (await readBody(req)) as { ms?: unknown };
+        return send(state.addAttention(typeof body.ms === 'number' ? body.ms : 0) ? 200 : 400, { ok: true });
+      }
       if (req.method === 'PUT' && url.pathname === '/api/board') {
         const body = (await readBody(req)) as { board?: unknown; baseRev?: unknown };
         const r = state.userWrite(body.board, typeof body.baseRev === 'number' ? body.baseRev : -1);
@@ -111,7 +116,7 @@ export function createHttp(state: BoardServer, opts: HttpOpts): Server {
       }
       if (req.method === 'GET' && url.pathname === '/api/export/preview') return send(200, previewHTML(state.board, url.searchParams.get('title') || 'Preview', url.searchParams.get('style') || undefined), 'text/html; charset=utf-8');
       if (req.method === 'GET' && url.pathname === '/api/export/prototype') return send(200, prototypeHTML(state.board, url.searchParams.get('title') || 'Prototype'), 'text/html; charset=utf-8');
-      if (req.method === 'GET' && url.pathname === '/api/review') return send(200, reviewPacket(state.board, state.baseline, state.rev).text, 'text/plain');
+      if (req.method === 'GET' && url.pathname === '/api/review') return send(200, reviewPacket(state.board, state.baseline, state.rev, state.attention()).text, 'text/plain');
       if (req.method === 'GET' && url.pathname === '/api/events') {
         res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive', ...(origin ? { 'access-control-allow-origin': origin, vary: 'Origin' } : {}) });
         res.write(`event: hello\ndata: ${JSON.stringify({ rev: state.rev, name: state.open })}\n\n`);

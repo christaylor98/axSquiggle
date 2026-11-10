@@ -1,3 +1,4 @@
+import { duration } from './attention';
 import { bounds, interArea, area } from './geom';
 import { convertElement, buildFromText, KEYWORDS, parseCell, setHint, setLabel, deleteElement, MIN_H, MAX_H } from './layout';
 import { resolveLinks, setLinks, linksOf } from './links';
@@ -273,11 +274,12 @@ export interface ReviewPacket {
 }
 
 /** What the AI fetches to see the review: open review notes (with the elements they point at), what the person changed since the AI's draft, and the board. */
-export function reviewPacket(b: Board, baseline: Board | null, rev: number): ReviewPacket {
+export function reviewPacket(b: Board, baseline: Board | null, rev: number, attn?: { total: number; after: number; aiAt: number | null }): ReviewPacket {
   const openNotes: ReviewPacket['openNotes'] = [];
   b.frames.forEach((f, fi) => f.notes.filter((n) => !n.done).forEach((n) => openNotes.push({ id: n.id, frame: fi + 1, text: n.text, about: n.about, region: n.box, targets: noteTargets(f, n.box), at: n.at })));
   const changes = baseline ? diffBoards(baseline, b) : [];
   const lines = [`REVIEW (board rev ${rev})`];
+  if (attn) lines.push('', `Attention (active time on this board: on screen, focused, touched within a minute): ${duration(attn.after)} since your last write${attn.aiAt ? ` (${clock(attn.aiAt)})` : ''}, ${duration(attn.total)} in total`);
   const times = openNotes.map((n) => n.at).filter((t): t is number => typeof t === 'number');
   lines.push('', `Open review notes: ${openNotes.length}${times.length ? ` (written ${clock(Math.min(...times))} to ${clock(Math.max(...times))})` : ''}`);
   for (const n of openNotes) {

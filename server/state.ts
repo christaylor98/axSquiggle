@@ -1,13 +1,15 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { freshBoard, validateBoard } from '../src/core/model';
+import { attentionOf, type Span } from '../src/core/attention';
 import { cloneBoard, type Board } from '../src/core/types';
 
 /** 'board': the open board's content changed or another board was opened. 'boards': the list of boards changed. */
 type Listener = (e: { type: 'board' | 'boards'; rev: number; name: string }) => void;
 
 export interface Snapshot { current: string; clock: number; slots: { name: string; board: Board; baseline: Board | null; rev: number; at: number }[] }
-interface Slot { name: string; board: Board; baseline: Board | null; rev: number; at: number }
+/** `attn`: the person's active time on this board, as the browser reported it; `aiAt`: when the AI last wrote it. */
+interface Slot { name: string; board: Board; baseline: Board | null; rev: number; at: number; attn: Span[]; aiAt: number | null }
 interface Registry { slots: Map<string, Slot>; current: string; clock: number; subs: Set<Listener>; dir?: string }
 
 const NAME = /^[A-Za-z0-9][A-Za-z0-9 _.-]{0,59}$/;
@@ -54,7 +56,7 @@ export class BoardServer {
     this.reg.slots.clear();
     for (const x of snap.slots) {
       const board = validateBoard(x.board);
-      if (board) this.reg.slots.set(x.name, { name: x.name, board, baseline: validateBoard(x.baseline), rev: x.rev, at: x.at });
+      if (board) this.reg.slots.set(x.name, { name: x.name, board, baseline: validateBoard(x.baseline), rev: x.rev, at: x.at, attn: [], aiAt: null });
     }
     this.reg.clock = Math.max(snap.clock, ...[...this.reg.slots.values()].map((s) => s.rev), 0);
     this.reg.current = this.reg.slots.has(snap.current) ? snap.current : [...this.reg.slots.keys()][0] ?? DEFAULT_BOARD;
@@ -71,16 +73,17 @@ export class BoardServer {
     let slot: Slot | null = null;
     if (f && existsSync(f)) {
       try {
-        const raw = JSON.parse(readFileSync(f, 'utf8')) as { rev?: number; board?: unknown; baseline?: unknown };
+        const raw = JSON.parse(readFileSync(f, 'utf8')) as { rev?: number; board?: unknown; baseline?: unknown; attn?: unknown; aiAt?: unknown };
         const board = validateBoard(raw.board);
         if (board) {
           const rev = typeof raw.rev === 'number' ? raw.rev : 0;
           this.reg.clock = Math.max(this.reg.clock, rev);
-          slot = { name, board, baseline: validateBoard(raw.baseline), rev, at: statSync(f).mtimeMs };
+          const attn = Array.isArray(raw.attn) ? (raw.attn as unknown[]).filter((x): x is Span => Array.isArray(x) && x.length === 2 && x.every((n) => typeof n === 'number' && Number.isFinite(n))) : [];
+          slot = { name, board, baseline: validateBoard(raw.baseline), rev, at: statSync(f).mtimeMs, attn, aiAt: typeof raw.aiAt === 'number' ? raw.aiAt : null };
         }
       } catch { /* treated as missing */ }
     }
-    if (!slot && create) { slot = { name, board: freshBoard(), baseline: null, rev: 0, at: Date.now() }; this.save(slot); }
+    if (!slot && create) { slot = { name, board: freshBoard(), baseline: null, rev: 0, at: Date.now(), attn: [], aiAt: null }; this.save(slot); }
     if (slot) this.reg.slots.set(name, slot);
     return slot;
   }
@@ -97,7 +100,7 @@ export class BoardServer {
     if (!f) return;
     try {
       mkdirSync(join(this.reg.dir!, 'boards'), { recursive: true });
-      writeFileSync(f, JSON.stringify({ rev: s.rev, board: s.board, baseline: s.baseline }));
+      writeFileSync(f, JSON.stringify({ rev: s.rev, board: s.board, baseline: s.baseline, attn: s.attn, aiAt: s.aiAt }));
     } catch { /* a read-only disk must not stop the session */ }
   }
   private saveCurrent() {
@@ -140,10 +143,24 @@ export class BoardServer {
     s.board = ok;
     s.rev = ++this.reg.clock;
     s.baseline = cloneBoard(ok);
+    s.aiAt = Date.now();
     this.save(s);
     this.changed(s);
     return msg ?? '';
   }
+
+  /** Active time the browser measured on the open board (ms, at most a minute per report). Not an edit: no new rev. */
+  addAttention(ms: number): boolean {
+    if (!(ms > 0 && ms <= 60_000)) return false;
+    const s = this.slotFor(this.reg.current);
+    if (!s) return false;
+    s.attn.push([Date.now(), Math.round(ms)]);
+    if (s.attn.length > 5000) s.attn.splice(0, s.attn.length - 5000);
+    this.save(s);
+    return true;
+  }
+  /** The person's active time on this board: since the AI last wrote it, and in total. */
+  attention() { return { ...attentionOf(this.slot.attn, this.slot.aiAt), aiAt: this.slot.aiAt }; }
 
   /** A person's edit from the browser, always on the open board. Rejected when the AI wrote in between (the browser then adopts the newer board). */
   userWrite(raw: unknown, baseRev: number): { ok: true; rev: number } | { ok: false; rev: number } {
@@ -192,7 +209,7 @@ export class BoardServer {
     const src = from === undefined ? null : this.find(from);
     if (from !== undefined && !src) throw new Error(`There is no board called "${from}" to copy. Boards: ${this.names().join(', ')}.`);
     const base = src ? this.slotFor(src)! : null;
-    const s: Slot = { name: n, board: base ? cloneBoard(base.board) : freshBoard(), baseline: base ? cloneBoard(base.board) : null, rev: ++this.reg.clock, at: Date.now() };
+    const s: Slot = { name: n, board: base ? cloneBoard(base.board) : freshBoard(), baseline: base ? cloneBoard(base.board) : null, rev: ++this.reg.clock, at: Date.now(), attn: [], aiAt: null };
     this.reg.slots.set(n, s);
     this.save(s);
     if (open) this.open_(n); else this.emit('boards', s);

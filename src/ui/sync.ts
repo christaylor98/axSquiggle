@@ -126,6 +126,9 @@ export class Sync {
       .then(async (r) => { const j = await r.json() as T & { error?: string }; if (!r.ok) throw new Error(j.error ?? `bridge said ${r.status}`); return j; });
   }
 
+  /** Report the person's active time on the open board (attention clock). Quietly dropped when the bridge is not there. */
+  attention(ms: number) { if (this.state === 'on' && ms > 0) void this.api('/api/attention', { ms }).catch(() => {}); }
+
   /** The boards the bridge holds. */
   boards() { return this.api<{ open: string; boards: { name: string; frames: number; changed: number; open: boolean }[] }>('/api/boards'); }
   /** Open a board (or make a new one when `create`); the browser then pulls it like any other change. */

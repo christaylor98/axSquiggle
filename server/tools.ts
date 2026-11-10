@@ -171,7 +171,7 @@ const BASE: Tool[] = [
     name: 'get_review',
     description: 'Fetch the person\'s review: their open review notes (with the elements each points at), what they changed since your last write, and the current board. They write notes in the app; nothing is pushed to you, so call this when they tell you they have left notes (or whenever you want to check). Images the person dropped behind frames (a photo of a hand sketch, a screenshot) come back as attached images: look at them and build the wireframe with draft_board / edit_frame.',
     shape: {},
-    run: async (s) => ({ text: reviewPacket(s.board, s.baseline, s.rev).text, images: frameImages(s.board) }),
+    run: async (s) => ({ text: reviewPacket(s.board, s.baseline, s.rev, s.attention()).text, images: frameImages(s.board) }),
   },
   {
     name: 'resolve_notes',
